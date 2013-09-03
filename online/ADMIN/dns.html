@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-22 17:55:18 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,DNS,Debian,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>DNS</i>
+</p>
+</div>
+
+
+
+
+<pre class="src src-text">                    dklab1                               dklab2              
+        ---------------------------------   ---------------------------------
+           / 
+ Enduser  |  
+services /   ...                                                     
+         \   
+          |                                                                  
+           \ 
+             ------------------------            ------------------------
+           / 
+  Base    |  
+services /   ...                                             
+         \
+          | 
+           \ DNS    named                        DNS    named                
+             ------------------------            ------------------------
+           / 
+ Dressed  |     
+ machine &lt;   ...
+          |  ========================            ========================      
+           \ ...
+             ========================            ========================     
+</pre>
+
+
+
+<p>
+See <code>/etc/bind/</code>
+</p>
+<ul>
+<li>
+Implementation: Bind9.
+
+</li>
+<li>
+Justification:
+<ul>
+<li>
+IP identifiers are not appropiate for humans.
+</li>
+<li>
+In a distributed system, DNS provides SRV resource registries, a way
+to dinamically know how many and where services are.
+</li>
+<li>
+Security services implementations (KERBEROS, TLS) use coincidences between
+its data and domain names while verifying credentials.
+
+</li>
+</ul>
+</li>
+<li>
+Replication:
+<ul>
+<li>
+Asynchronous Zone Transfer.
+</li>
+<li>
+Master-Slave scheme (dklab1 master)
+</li>
+<li>
+Note DLZ patches: we were exploring the possibility of storing DNS zones
+in LDAP thanks to DLZ patches on bind9. But those patches have some
+caveats (no dynamic updates, possible authentication problems, no clear
+documentation) and, finally, we refused that possibility.
+
+</li>
+</ul>
+</li>
+<li>
+Security:
+<ul>
+<li>
+Answers to queries (UDP/53) are not secured.
+</li>
+<li>
+By contrast, ACL by source IP and TSIG mechanism (digital signature) are
+applyed to:
+<ul>
+<li>
+Zone Transfers (TCP/53)
+</li>
+<li>
+Dynamic Updates (UDP/53 or TCP/53)
+</li>
+<li>
+Control of named (TCP/953)
+
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+DNS Views for Direct Zone:
+<ul>
+<li>
+Two views: "vpn" is used if source IP is in the VPN range; "external"
+in any other case.
+</li>
+<li>
+The entire project is implemented in "vpn" view, but views are
+ilustrated because they constitute a great control mechanism. Not all of
+our services have built-in mechanisms to deal with multihomed scenarios, we
+can add.
+
+</li>
+</ul>
+</li>
+<li>
+Name policy. Since it can highly clarify our deployment, it is left almost
+complete in the following lines. Important aspects are our domain name, or
+the fact that services are deployed both, in dklab1 and dklab2, or the use of
+SRV, A and specific RR (such as those for SPF, DKIM, AFS&hellip;) etc.
+
+</li>
+</ul>
+
+
+<div style="text-align: center">
+
+
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption><b>Domain Name</b></caption>
+<colgroup><col align="left" />
+</colgroup>
+<tbody>
+<tr><td>casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>DNS</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>SOA</td><td>casafx.dyndns.org.</td><td>&hellip;</td></tr>
+<tr><td>NS</td><td>casafx.dyndns.org.</td><td>ns1.casafx.dyndns.org.</td></tr>
+<tr><td>NS</td><td>casafx.dyndns.org.</td><td>ns2.casafx.dyndns.org.</td></tr>
+<tr><td>HINFO</td><td>casafx.dyndns.org.</td><td>"PC" "Debian 6"</td></tr>
+</tbody>
+</table>
+
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>NTP</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>A</td><td>ntp.casafx.dyndns.org.</td><td>10.168.1.1</td></tr>
+<tr><td>A</td><td>ntp.casafx.dyndns.org.</td><td>10.168.1.2</td></tr>
+<tr><td>SRV</td><td>_ntp._udp.casafx.dyndns.org.</td><td>0 0 123 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_ntp._udp.casafx.dyndns.org.</td><td>0 0 123 dklab2.casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>LDAP</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>SRV</td><td>_ldap._tcp.casafx.dyndns.org.</td><td>0 0 389 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_ldap._tcp.casafx.dyndns.org.</td><td>0 0 389 dklab2.casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>KERBEROS</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>TXT</td><td>_kerberos.casafx.dyndns.org.</td><td>"CASAFX.DYNDNS.ORG"</td></tr>
+<tr><td>SRV</td><td>_kerberos-adm._tcp.casafx.dyndns.org.</td><td>0 0 749 krb1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_kerberos-adm._tcp.casafx.dyndns.org.</td><td>0 0 749 krb2.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_kpasswd._udp.casafx.dyndns.org.</td><td>0 0 464 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_kpasswd._udp.casafx.dyndns.org.</td><td>0 0 464 dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_kerberos-master._udp.casafx.dyndns.org.</td><td>0 0 88 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_kerberos-master._udp.casafx.dyndns.org.</td><td>0 0 88 dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_kerberos._ucp.casafx.dyndns.org.</td><td>0 0 88 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_kerberos._ucp.casafx.dyndns.org.</td><td>0 0 88 dklab2.casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>AFS</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>SRV</td><td>_afs3-vlserver._udp.casafx.dyndns.org.</td><td>0 0 7003 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_afs3-vlserver._udp.casafx.dyndns.org.</td><td>0 0 7003 dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_afs3-prserver._udp.casafx.dyndns.org.</td><td>0 0 7002 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_afs3-prserver._udp.casafx.dyndns.org.</td><td>0 0 7002 dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>AFSDB</td><td>casafx.dyndns.org.</td><td>1 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>AFSDB</td><td>casafx.dyndns.org.</td><td>1 dklab2.casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>XMPP</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>SRV</td><td>_xmpp-client._tcp.casafx.dyndns.org.</td><td>0 0 5222 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_xmpp-client._tcp.casafx.dyndns.org.</td><td>0 0 5222 dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_xmpp-server._tcp.casafx.dyndns.org.</td><td>0 0 5269 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_xmpp-server._tcp.casafx.dyndns.org.</td><td>0 0 5269 dklab2.casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>MAIL SYSTEM</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>MX</td><td>casafx.dyndns.org.</td><td>0 mx1.casafx.dyndns.org.</td></tr>
+<tr><td>MX</td><td>casafx.dyndns.org.</td><td>0 mx2.casafx.dyndns.org.</td></tr>
+<tr><td>SPF</td><td>casafx.dyndns.org.</td><td>"v=spf1 mx/24 ?all"</td></tr>
+<tr><td>TXT</td><td>casafx.dyndns.org.</td><td>"v=spf1 +mx/24 ?all"</td></tr>
+<tr><td>TXT</td><td>exim4dkim._domainkey.casafx.dyndns.org.</td><td>"v=DKIM1; s=&hellip; &hellip; p=&hellip;"</td></tr>
+<tr><td>TXT</td><td>_domainkey.casafx.dyndns.org.</td><td>"t=y; o=~;"</td></tr>
+<tr><td>TXT</td><td>_adsp._domainkey.casafx.dyndns.org.</td><td>"dkim=unknown"</td></tr>
+<tr><td>SRV</td><td>_imap._tcp.casafx.dyndns.org.</td><td>0 0 143 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_imap._tcp.casafx.dyndns.org.</td><td>0 0 143 dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_submission._tcp.casafx.dyndns.org.</td><td>0 0 587 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_submission._tcp.casafx.dyndns.org.</td><td>0 0 587 dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_sieve._tcp.casafx.dyndns.org.</td><td>0 0 4190 dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>SRV</td><td>_sieve._tcp.casafx.dyndns.org.</td><td>0 0 4190 dklab2.casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>A Registries</caption>
+<colgroup><col align="left" /><col align="left" /><col align="right" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>A</td><td>dklab1.casafx.dyndns.org.</td><td>10.168.1.1</td></tr>
+<tr><td>A</td><td>dklab2.casafx.dyndns.org.</td><td>10.168.1.2</td></tr>
+<tr><td>A</td><td>ns1.casafx.dyndns.org.</td><td>10.168.1.1</td></tr>
+<tr><td>A</td><td>ns2.casafx.dyndns.org.</td><td>10.168.1.2</td></tr>
+</tbody>
+</table>
+
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>CNAME (not really used)</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>CNAME</td><td>openvpn1.casafx.dyndns.org.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>ntp1.casafx.dyndns.org.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>ntp2.casafx.dyndns.org.</td><td>dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>ldap1.casafx.dyndns.org.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>ldap2.casafx.dyndns.org.</td><td>dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>krb1.casafx.dyndns.org.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>krb2.casafx.dyndns.org.</td><td>dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>afs1.casafx.dyndns.org.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>afs2.casafx.dyndns.org.</td><td>dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>managesieve1.casafx.dyndns.org.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>managesieve2.casafx.dyndns.org.</td><td>dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>mx1.casafx.dyndns.org.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>mx2.casafx.dyndns.org.</td><td>dklab2.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>imap1.casafx.dyndns.org.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>CNAME</td><td>imap2.casafx.dyndns.org.</td><td>dklab2.casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>INVERSE ZONE</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Type (RR)</th><th scope="col">Name (FQDN)</th><th scope="col">Specific data of its type</th></tr>
+</thead>
+<tbody>
+<tr><td>NS</td><td>1.168.10.IN-ADDR.ARPA.</td><td>ns1.casafx.dyndns.org.</td></tr>
+<tr><td>NS</td><td>1.168.10.IN-ADDR.ARPA.</td><td>ns2.casafx.dyndns.org.</td></tr>
+<tr><td>PTR</td><td>1.1.168.10.IN-ADDR.ARPA.</td><td>dklab1.casafx.dyndns.org.</td></tr>
+<tr><td>PTR</td><td>2.1.168.10.IN-ADDR.ARPA.</td><td>dklab2.casafx.dyndns.org.</td></tr>
+</tbody>
+</table>
+
+
+
+</div>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

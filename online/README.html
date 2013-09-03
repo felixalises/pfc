@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="title" content="Distributed Deployment of Telematic Services. Testbed."/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2013-07-11 18:00:11 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,DNS,NTP,LDAP,KERBEROS,AFS,SMTP,IMAP,MANAGESIEVE,POSIX,Debian,shell,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  {margin-left:auto; margin-right:0px;  text-align:right;}
+  .left   {margin-left:0px;  margin-right:auto; text-align:left;}
+  .center {margin-left:auto; margin-right:auto; text-align:center;}
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top;  }
+  th.right  { text-align:center;  }
+  th.left   { text-align:center;   }
+  th.center { text-align:center; }
+  td.right  { text-align:right;  }
+  td.left   { text-align:left;   }
+  td.center { text-align:center; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  div.inlinetask {
+    padding:10px;
+    border:2px solid gray;
+    margin:10px;
+    background: #ffffcc;
+  }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+
+</head>
+<body>
+
+<div id="preamble">
+
+</div>
+
+<div id="content">
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>README</i>
+</p>
+</div>
+
+
+
+<br></br>
+<blockquote>
+
+<p>You are reading a local README file using w3m text web browser, useful
+keybindings are 'B' and &lt;TAB&gt; to go-back and jump between links. There is also
+an online version of this document, point your browser at
+http<a>://testbed.casafx.dyndns.org/testbed/README.html.
+</p>
+</blockquote>
+
+
+<blockquote>
+
+<p>You can swap this README file with an interactive bash shell and viceversa if
+you press C-a n (that is to say, you hold 'Control' and 'a' keys at the same
+time, then you unhold them and press 'n' key). That said, please, continue
+reading.
+</p>
+</blockquote>
+
+
+
+
+<br></br>
+
+<p>
+The purpose of this virtual machine is to let you test the deployment
+fully described here: http<a>://testbed.casafx.dyndns.org/pfc/DOCUMENTOS/
+(only Spanish).
+</p>
+<p>
+It was created by me, Félix Alises-Casas, and in its final stage I
+decided to reorient it as my Final Year Proyect in order to complete
+my Bachelor in Telematics. Hence, the extensive documentation in
+Spanish.
+</p>
+<p>
+A synoptic chart of concepts and protocols follows, we will unfold it later:
+</p>
+
+
+<pre class="src src-text">                     dklab1 server                      dklab2 server
+            -------------------------------    -------------------------------
+           /
+          |  Mail   SMTP, IMAP, MANAGESIEVE     Mail   SMTP, IMAP, MANAGESIEVE
+          |  
+ Enduser /   IM     XMPP/Jingle                 IM     XMPP/Jingle
+services \ 
+          |  
+          |  Shell  POSIX                       Shell  POSIX
+           \ 
+             ------------------------           ------------------------
+           / FS     AFS                         FS     AFS
+          |  
+  Base    |  DB     LDAP, SQL                   DB     LDAP, SQL
+services /
+         \   Auth   KRB5                        Auth   KRB5
+          |  
+          |  Time   NTP                         Time   NTP 
+          |  
+           \ DN     DNS                         DN     DNS
+             ------------------------           ------------------------
+           /           VPN                                VPN          
+ Dressed  |  Net      TCP/IP                    Net      TCP/IP
+ machine &lt;   OS      UNIX-like                  OS      UNIX-like
+          |  ========================           ========================
+           \ HW  x86 virtualization             HW  x86 virtualization
+             ========================           ========================
+</pre>
+
+
+<p>
+  The original documentation is more than 800 pages. So, it is summarized here
+  in less than 2000 lines distributed in small files and using different
+  resources (ttyrec videos, flowcharts, diagrams). The goal is to offer you
+  several entry points to my comments as well as a moderate rich reading
+  experience.
+</p>
+<p>
+  The rest of this text is a general overview of the platform and a "What to do
+  next" epilogue to this README document.
+</p>
+<p>
+  I will use authoring plural during my exposure.
+</p>
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 General overview</a>
+<ul>
+<li><a href="#sec-1-1">1.1 Chosen implementations</a></li>
+<li><a href="#sec-1-2">1.2 How it works</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2 What to do next</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> General overview</h2>
+<div class="outline-text-2" id="text-1">
+
+<p>  The ultimate aim is to deploy a telematic infrastructure that offers usual
+  services (VoIP, mail, shell&hellip;) to its users, and that employs specialized
+  technologies (LDAP, KERBEROS, AFS, NTP&hellip;) to deal in a distributed way with
+  all the metadata those services depend on. Therefore, it is a telematic
+  infrastructure as those found in well known USA digital university campuses,
+  research centers or other organizations that have the need to autoprovide
+  themselves with their communication services in a large and scalable way.
+</p>
+<p>
+  Specifying a bit more, and in line with what we have mentioned, we can
+  analyze our infraestructure as compounded by two main layers of services:
+  base services and, on top of that, end-user services. Base layer offers
+  services to end-user layer, and end-user layer offers services to end-users,
+  to the people of our organization. Let us focus on each layer:
+</p>
+<ul>
+<li><b>End-user services layer</b>. We tried to support the fundamental types of services:
+    synchronous person-person (IM and VoIP), asynchronous person-person
+    (mail services), generic person-system (POSIX shell, see later).
+<ul>
+<li>A fundamental design of the deployment of this layer is that in/out to
+      the corresponding servers is beneficiated by a distributed deployment. So
+      both, dklab1 and dklab2 run an instance of each server and are properly
+      configured to let users registered in one instance to communicate with
+      those registered in other, etc.  The client part is also installed and
+      configured in dklab1 and dklab2, see later for indications to log-in
+      using a centralized account and, thanks to it, to test the services using
+      the installed client implementations.
+</li>
+</ul>
+
+</li>
+</ul>
+
+
+
+<ul>
+<li><b>Base services layer</b>. The former servers and its clients make use of
+    a layer of specialized servers to deal with metadata. Making the story
+    short:
+
+<p>
+    DNS service and its SRV records provides a mechanism to discover the
+    services. NTP provides a consistent time source for databases replication
+    mechanisms, kerberos tickets expiration date etc. KERBEROS provides the
+    authentication subservice for all the protocols except DNS and
+    NTP. Specific metadata of each service (account information, subscriptions,
+    mail redirection&hellip; also kerberos keys) are stored under an LDAP directory,
+    except volatile data (such as IM presence state) that uses an SQL
+    database. AFS is the distributed file system that offers an ubiquitous home
+    directory for end-users as well as file storage for servers, if needed.
+</p><ul>
+<li>Therefore, we have an SQL, LDAP, DNS&hellip; server instance in dklab1 where
+      the rest of the systems resolve metadata. However, that way dklab1 could
+      constitute a single point of failure and, as a solution for this, the
+      in/out to them is distributed thanks to redundant instances in
+      dklab2. That introduces a problem of consistency and coherence in our
+      data model, so automatic replication mechanisms are used. Whenever
+      possible, the scheme used is synchronous multi-master replication, but
+      not always (DNS for example uses the classic master-slave scheme in our
+      deployment). Thanks to the DBMS's components, redundancies and
+      replication mechanisms the data model of our services is properly
+      centralized and, as a result, easy to manage and scale.
+</li>
+</ul>
+
+</li>
+</ul>
+
+
+
+<ul>
+<li><b>Missing layer</b>. We can miss a third, control layer ensuring conditions
+    such as high availability or high performance. Although we are
+    familiarized with corosync/pacemaker or linux virtual server, they are not
+    included in this specific deployment (if interested, you can take a look
+    to our notes and key deployments guides about them in a more informal
+    style - and only spanish - here: <a href="http://testbed.casafx.dyndns.org/tmp/HighAvailability.html">HA</a>, <a href="http://testbed.casafx.dyndns.org/tmp/HighPerformance.html">HP</a>). It is worth to mention that,
+    nonetheless, some of our chosen implementations provide built-in
+    clustering services by thir own (notably OpenAFS).
+</li>
+</ul>
+
+
+
+
+
+
+
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Chosen implementations</h3>
+<div class="outline-text-3" id="text-1-1">
+
+<p>  Debian GNU/Linux 6 was the OS used for dklab1 and dklab2 servers, but also to
+  deploy the client role (using notably multiplatform clients). The chosen
+  implementations were:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption></caption>
+<colgroup><col class="left" /><col class="left" />
+</colgroup>
+<thead>
+<tr><th scope="col" class="left">Service/Proto</th><th scope="col" class="left">Software implementation</th></tr>
+</thead>
+<tbody>
+<tr><td class="left">SMTP</td><td class="left"><a href="http://www.exim.org/">Exim4</a> server (+ <a href="http://www.clamav.net/lang/en/">Clamav</a> and <a href="http://spamassassin.apache.org/">Spamassassin</a>); <a href="http://www.mozilla.org/en-US/thunderbird/">Thunderbird</a> and <a href="http://www.mutt.org/">Mutt</a> clients.</td></tr>
+<tr><td class="left">IMAP</td><td class="left"><a href="http://www.dovecot.org">Dovecot</a> server; Thunderbird and Mutt clients.</td></tr>
+<tr><td class="left">MANAGESIEVE</td><td class="left"><a href="http://wiki.dovecot.org/ManageSieve">Dovecot</a> server; <a href="http://people.spodhuis.org/phil.pennock/software/#sieve-connect">Sieve-connect</a> clients.</td></tr>
+<tr><td class="left">XMPP+Jingle</td><td class="left"><a href="http://codex.xiaoka.com/wiki/jabberd2:start">Jabberd2</a> server; <a href="http://www.pidgin.im/">Pidgin</a> and <a href="https://developer.pidgin.im/wiki/Using Finch">Finch</a> clients.</td></tr>
+<tr><td class="left">POSIX Shell</td><td class="left"><a href="http://www.debian.org">Debian</a> GNU/Linux, limited indications for Windows and OSX were also provided.</td></tr>
+<tr><td class="left">AFS</td><td class="left"><a href="http://www.openafs.org">OpenAFS</a>.</td></tr>
+<tr><td class="left">SQL RDBMS</td><td class="left"><a href="http://www.postgresql.org/">PostgreSQL</a> (+ <a href="http://bucardo.org/wiki/Bucardo">Bucardo</a>).</td></tr>
+<tr><td class="left">LDAP</td><td class="left"><a href="http://www.openldap.org/">OpenLDAP</a>.</td></tr>
+<tr><td class="left">KERBEROS</td><td class="left"><a href="http://www.kerberos.org/">MIT Kerberos</a>.</td></tr>
+<tr><td class="left">NTP</td><td class="left"><a href="http://www.ntp.org">Ntp.org</a>.</td></tr>
+<tr><td class="left">DNS</td><td class="left"><a href="http://www.isc.org/software/bind">Bind9</a>.</td></tr>
+<tr><td class="left">SSH</td><td class="left"><a href="http://www.openssh.com/">OpenSSH</a>.</td></tr>
+<tr><td class="left">VPN</td><td class="left"><a href="http://openvpn.net/index.php/open-source.html">OpenVPN</a> (+ <a href="http://openssl.org/">OpenSSL</a> for the creation of our Certificate Authority, see later).</td></tr>
+<tr><td class="left">SO</td><td class="left"><a href="http://www.debian.org">Debian</a> GNU/Linux.</td></tr>
+</tbody>
+</table>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> How it works</h3>
+<div class="outline-text-3" id="text-1-2">
+
+
+<p>
+  So, how it works?
+</p>
+<p>
+  An <b>user</b> choses a computer, no matter which one, and completes a log-in
+  secuence giving a username and a password. Both are used by the log-in
+  process to get a KERBEROS ticket. Automatically this ticket is used to get an
+  AFS token and, finally, the OS shell is provided to the user and working
+  directory is set to his home in AFS.
+</p>
+<p>
+  From then, this user can open a mail MUA software and check an IMAP account,
+  send new emails or manage sieve filters. He or she can also open an instant
+  messaging/VoIP software which, in a second, receives from the server an
+  automatically generated (from LDAP) roster including current people of the
+  organization grouped by some criteria.
+</p>
+<p>
+  Those communications are authenticated without any extra prompt to the user
+  thanks to KERBEROS Single Sign On solution. SASL-GSSAPI authentication
+  subprotocol or TLS presentation subprotocol provide an encryption layer
+  and, for that reason, integrity and confidential services.
+</p>
+<p>
+  The user can use all the authorized resources of the computer (other software
+  installed etc) and, if to have better hardware available results to be
+  necessary, the user can move to that better computer or initiates an ssh
+  remote session in situ. In both cases, the environment remains
+  the same thanks to the use of an LDAP centralized account and AFS home
+  directory.
+</p>
+
+<p>  
+  From the point of view of the <b>administrator</b>, after deploying all the
+  infrastructure described here etc, the inclusion of a new user is as
+  simple as running a script that, in essence, creates the relevant entries
+  and resources in LDAP, KERBEROS and AFS. After that the account is usable
+  from any computer, and the new user is subscribed to the rest of the
+  people, newsletter mails etc.
+</p>
+<p>
+  If a new computer is bought for users (not as a server), the administrator
+  has to just modify the log-in process to point to the base servers (LDAP,
+  KERBEROS, AFS&hellip;), making the centralized accounts available.
+</p>
+<p>
+  If the organization grows, new servers have to be added. Thanks to the
+  DNS SRV service discovering and the replication technics used, the
+  addition of new servers is very independent of the rest, and should not
+  impose new problems or a great overhead.
+</p>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> What to do next</h2>
+<div class="outline-text-2" id="text-2">
+
+<p>As you know, the deployment is compound by the minimum number of needed
+machines, two: dklab1 (where you are), and dklab2. You can use 'ssh' to move
+from one to the other, just command:
+</p>
+
+
+<pre class="src src-sh">ssh dklab2   <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">As known: username = password = root</span>
+</pre>
+
+
+<p>
+But, please, be aware that, for now, you would prefer to do these three types
+of things:
+</p><ul>
+<li>Continue reading.
+</li>
+<li>Watch demostrative ttyrec videos.
+</li>
+<li>Take those videos as an example of commands to run.
+</li>
+</ul>
+
+
+<p>
+To continue reading, you can press 'q' to exit this file and run "Relevant"
+command. It lists relevant files to read and ttyplay. We suggest you start
+reading <a href="./ADMIN/README.admin.html">ADMIN/README.admin</a>, which unfolds the deployment details. Then, you can
+read <a href="./USER/README.user.html">USER/README.user</a> which points you to an overview of the final present
+features of each end-user service. Additionally, each of those documents of
+features give you instructions to watch a ttyrec demonstration as well as a
+transcription of it. This way you can have a source of interesting commands to
+imitate in order to play and inspect the deployment by yourself.
+</p>
+
+
+
+<pre class="src src-sh"><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">What to do next:</span>
+ Relevant
+ w3m ADMIN/README.admin.html
+ w3m USER/README.user.html
+ ttyplay USER/TTYREC/shell.ttyrec
+</pre>
+
+
+<p>
+Both, dklab1 and dklab2, are run by qemu in snapshot mode. Any changes you make
+will not last really long.
+</p>
+
+<hr/>
+</div>
+</div>
+</div>
+
+<div id="postamble">
+<p class="author">Author: Félix Alises-Casas</p>
+<p class="email"><a href="mailto:felix.alises.io@gmail.com">felix.alises.io@gmail.com</a></p>
+<a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a>
+
+</div>
+</body>
+</html>

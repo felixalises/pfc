@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-27 20:12:09 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,hw,os,tcp/ip,vpn,Debian,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>HW, OS, TCP/IP, VPN</i>
+</p>
+</div>
+
+
+
+
+<pre class="src src-text">                   dklab1                               dklab2
+            ------------------------             ------------------------ 
+          /     OpenVPN tcp-server                   OpenVPN tcp-client
+Dressed  |           TCP/IP                               TCP/IP
+machine &lt;   SO   Debian GNU/Linux                SO   Debian GNU/Linux 
+         |  ========================             ======================== 
+          \ HW    q e m u  x 8 6                 HW    q e m u  x 8 6 
+            ========================             ======================== 
+</pre>
+
+
+
+<p>
+We do not intend to explain this layer in depth. Two Qemu instances launch
+two Debian images. Thanks to Qemu technology, both running images are
+interconnected through TCP/IP and, on top on that, an VPN is deployed:
+</p>
+
+
+
+<pre class="src src-text">                   dklab1                               dklab2
+            ------------------------             ------------------------
+ip               192.168.1.10                         192.168.1.20
+vpn               10.168.1.1                           10.168.1.2
+</pre>
+
+
+
+<p>
+These are the OpenVPN features used:
+</p><ul>
+<li>
+Major mode "server" in dklab1, "client" in dklab2.
+</li>
+<li>
+Protocol "tcp-server" in dklab1, "tcp-client" in dklab2.
+</li>
+<li>
+Topology "subnet" (no ethernet switch, so, although possible).
+</li>
+<li>
+Minor mode "client-to-client".
+</li>
+<li>
+CCD system (Client Config Directory), to have setup instructions per client.
+</li>
+<li>
+PKIX security services, "tls-server" in dklab1, "tls-client" in dklab2. We
+have created our own CA to provide trusted PKC certificates, revokation
+lists etc.
+</li>
+<li>
+Non privileged local account "openvpn" to run the daemon.
+</li>
+<li>
+Debian network configuration integration so VPN is stablished automatically.
+
+</li>
+</ul>
+
+<p>See <i>etc/openvpn</i>, /etc/network/interfaces
+</p>
+
+<p>
+TLS is used several times during our deployment, not only on OpenVPN. TLS
+uses PKC X.509 certificates to implement a PKIX (ie an OSI X.509 PKI adapted
+to Internet). We have created our own CA, Certificate Authority, to create
+our own trust paths. Our configuration file, openssl.cnf declares support
+for three types of certificates:
+</p><ul>
+<li>
+For CA, section [CA_default]
+</li>
+<li>
+A specific certificate for OpenVPN acting as tls-server, section [server]
+</li>
+<li>
+For the rest, section [usr_cert]
+
+</li>
+</ul>
+
+<p>They differ from each other, of course, by the attributes present. Some
+of them get their value from environment variables at creation time,
+mechanism that let as reuse that configuration.
+We can mention some relevant attributes:
+</p>
+<ul>
+<li>
+"Netscape Cert Type", it authorizes an OpenVPN instance refered by the
+"Subject" attribute to act in tls-server mode, avoiding MitM situations.
+
+</li>
+<li>
+"X509v3 Subject Alternative Name", to add possible names (usually DNS) to
+which appear in Subject. This was fundamental to get a successfull
+verification by service clients.
+
+</li>
+<li>
+"X509v3 Basic Constraints", identifies if Subject can sign and which depth level.
+
+</li>
+<li>
+"X509v3 Key Usage", allowed uses of the key in "Subject Public Key Info".
+
+</li>
+</ul>
+
+<p>We did not need other types of authorities and certificates, such as
+Authorization Authorities and Authorization certificates associated with PMI
+model. But, as it clearly happens with "Netscape Cert Type" attribute, some
+attributes are used for authorization.
+</p>
+<p>
+See /usr/local/lib/easy-rsa/2.0/openssl.cnf, /usr/local/lib/easy-rsa/2.0/vars
+</p>
+
+
+
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-21 13:02:05 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,AFS,Debian,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>AFS</i>
+</p>
+</div>
+
+
+
+
+<pre class="src src-text">                    dklab1                               dklab2              
+        ---------------------------------   ---------------------------------
+           / 
+ Enduser  |  
+services /   ...                                                     
+         \   
+          |                                                                  
+           \ 
+             ------------------------            ------------------------
+           / AFS    fileserver                   AFS    fileserver           
+          |         volserver                           volserver            
+          |         salvager                            salvager             
+          |         buserver                            buserver             
+          |         prserver                            prserver             
+          |         vlserver                            vlserver             
+  Base    |         bosserver                           bosserver            
+services /   ...
+         \
+          |  
+           \
+             ------------------------            ------------------------ 
+           / 
+ Dressed  | 
+ machine &lt;   ...
+          |  ========================            ========================
+           \ ...
+             ========================            ========================
+</pre>
+
+
+
+<p>
+See <code>/etc/openafs/</code>
+</p>
+<ul>
+<li>
+Implementation: OpenAFS
+
+</li>
+<li>
+Justification: shell users as well as servers (eg mail servers) needs to
+store very variable size pieces of information and, on them, take actions
+such as reading, writing, moving, linking, grouping. A network file system
+such as the reputated AFS provides all of that in our distributed environment
+and is compatible with Kerberos.
+
+</li>
+<li>
+Replication: AFS uses its own DBMS and protocol (UBIK) for replicating
+its metadata.
+
+</li>
+<li>
+Security: authentication using KERBEROS, authorization using its own model,
+confidentiality and integrity (using its own mechanism of encryption) is
+activated.
+
+</li>
+<li>
+Topology: in both, dklab1 and dklab2, we deployed these AFS components groups:
+<ul>
+<li>
+"Simple File Server" (that is fileserver, volserver and salvager components)
+</li>
+<li>
+"Database Sever" (ptserver, vlserver, buserver components; not
+kaserver). They, ptserver and vlserver, are the components discovered by
+clients using DNS SRV/AFSDB registries. Instances on dklab1 and dklab2 are
+registered to each other.
+</li>
+<li>
+"Client" (afsd and kernel module).
+
+</li>
+</ul>
+
+<p>There is a problem with kernel module: it freezes machine if we load it while
+booting, so we have to do it manually later (it is already done for you),
+starting both, AFS and the services that uses it (that is Exim4, Dovecot).
+</p>
+</li>
+<li>
+Multihomed configuration: there being several components, there are several
+communications between them and mechanisms to add control over which IP's are
+used and which are not. To make the story short we will say that we are not
+interest in other IP than VPN so we indicated the rest in a NetRestrict file.
+
+</li>
+<li>
+Some AFS administration features explored:
+<ul>
+<li>
+AFS moving of user.umea volume to dklab2
+</li>
+<li>
+AFS Site (read only replica) for user.umea.readonly in dklab1
+</li>
+<li>
+Mount and register new cells under /afs, for example
+ihep.su (russian high energy physics institute).
+</li>
+<li>
+AFS Dump of user.umea volume in dklab2, /var/local/afsvol-user.umea.dump
+</li>
+<li>
+AFS Restore
+</li>
+<li>
+AFS chronological tasks to backup user and mail volumes
+</li>
+<li>
+AFS Copy of user.umea volume
+</li>
+<li>
+AFS check of volumes and DB
+</li>
+<li>
+Architecture and Operating System dependant views ("@sys" and "sysname"
+mechanism) was fully explored. A design was created but not implemented.
+</li>
+<li>
+&hellip;
+
+</li>
+</ul>
+
+<p>Finally, after all that said, to have a precise idea of which services and
+volumes there are, just command:
+</p>
+</li>
+</ul>
+
+<p>bos status dklab1 -long
+bos status dklab2 -long
+vos listvol dklab1 -localauth
+vos listvol dklab2 -localauth
+</p>
+<ul>
+<li>
+AFS Filespace planning:
+
+<p>
+Cellname: <code>casafx.dyndns.org</code> (as usual, Kerberos REALM in lowercase).
+</p>
+<p>
+Tree:
+We have two main branches, for users (homes) and for services. Until now,
+services means mail (user mail storing, sieve filters, public newsletter&hellip;).
+As you can see, we always use a directory structure with two sublevels.
+</p>
+
+</li>
+</ul>
+
+
+<pre class="src src-text">/afs/casafx.dyndns.org/
+                      &#9500;&#9472;&#9472; service
+                      &#9474;   &#9492;&#9472;&#9472; mail
+                      &#9474;       &#9500;&#9472;&#9472; a
+                      &#9474;       &#9474;   &#9492;&#9472;&#9472; ae
+                      &#9474;       &#9474;       &#9492;&#9472;&#9472; aemu
+                      &#9474;       &#9500;&#9472;&#9472; Public         
+                      &#9474;       &#9500;&#9472;&#9472; sieve          
+                      &#9474;       &#9492;&#9472;&#9472; u              
+                      &#9474;           &#9492;&#9472;&#9472; um         
+                      &#9474;               &#9492;&#9472;&#9472; umea   
+                      &#9492;&#9472;&#9472; user                   
+                          &#9500;&#9472;&#9472; a                  
+                          &#9474;   &#9492;&#9472;&#9472; ae             
+                          &#9474;       &#9492;&#9472;&#9472; aemu       
+                          &#9474;           &#9492;&#9472;&#9472; Desktop
+                          &#9474;           
+                          &#9492;&#9472;&#9472; u                  
+                              &#9492;&#9472;&#9472; um             
+                                  &#9492;&#9472;&#9472; umea       
+                                      &#9492;&#9472;&#9472; Desktop
+</pre>
+
+
+
+<p>
+Corresponding volumes are under /vicepa. You can use "fs lsmount &lt;dir&gt;" to
+look for mount points directories to volume names maps.
+
+</p>
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

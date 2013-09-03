@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-23 00:28:02 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,DNS,NTP,LDAP,KERBEROS,AFS,SMTP,IMAP,MANAGESIEVE,POSIX,Debian,shell,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>POSIX SHELL</i>
+</p>
+</div>
+
+<p>
+Generic person-system service implementation. Features:
+</p>
+<ol>
+<li>
+Users can completely use computer resources thanks to a Shell interface.
+</li>
+<li>
+Homogeneous use of any computer: same password, same home, same documents,
+same software.
+</li>
+<li>
+Under this, user has always the possibility of switching from a machine to
+other looking for gretater computing power or other hardware characteristic.
+</li>
+<li>
+A successfull log-in process prepares SSO (Single Sign On) availability
+later.
+
+<p>
+We fully deployed this on Debian GNU/Linux, so we installed and configured
+specific  components of its NSS and PAM subsystems. As a result, the log-in
+process let centralized accounts be used:
+</p><ul>
+<li>
+NSS subsystem can query all the necessary metadata to LDAP.
+</li>
+<li>
+PAM, by its own and helped by NSS, can get Kerberos TGT ticket after
+successfully challenging KERBEROS AS (Authentication Server), ensuring
+SSO (Single Sign On) later:
+</li>
+<li>
+Thanks to Kerberos TGT ticket, PAM can also get a service ticket for AFS,
+allowing shell to place the user in its ubiquitous home directory
+under /afs.
+</li>
+<li>
+Evidently, DNS was properly set up pointing to our servers in order to
+let the rest of the services to discover each other.
+
+</li>
+</ul>
+
+<p>The third feature (switching to other machine) can be used in situ through
+SSH (service which is also deployed and takes advantage of SSO). Additional
+possibilities such as X forwarding and sound output network redirection were
+also explored.
+</p>
+
+</li>
+</ol>
+
+<p>There is a ttyrec video (15 minutes). Please, run:
+</p>
+
+
+<pre class="src src-sh">ttyplay ~/USER/TTYREC/shell.ttyrec
+</pre>
+
+
+
+
+<p>
+( A transcription of it, follows. Feel free to play using this commands as a reference. )
+</p>
+
+
+<pre class="src src-sh">-
+                 POSIX SHELL SERVICE DEMOSTRATION
+
+
+
+&#172;
+
+                   ( Useful  ttyplay  keybindings:
+
+                     &lt;space&gt;    jump to next event, do not wait!
+                     0,1        pause or set 1x speed.
+                     Control-c  exit.
+                   )
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">At this initial point, we are root and our current directory is /root,
+</span>  we can check it:
+
+whoami
+<span style="color: #b0c4de;">pwd</span>
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">...we are going to change that.
+</span>
+clear
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Our purpouse is to log-in using a centralized account such as "umea", and to
+</span>  check how this log-in process 1) gets KERBEROS and AFS credentials, 2)
+  gets user metadata from LDAP and 0) discovers all those services querying
+  SRV DNS registries.
+
+  We use <span style="color: #ffa07a;">"login"</span>, a log-in program interfaced with our already configured PAM
+  and NSS subsystems. They, PAM and NSS, are the real responsables for the
+  discovery and connection with Kerberos, AFS and LDAP subsystems (the steps we
+  have mentioned<span style="color: #00ffff;"> in</span> the former paragraph) on behalf of us.
+
+  So, since those connections are stablished thanks to DNS SRV registries, we
+  can start checking that they are<span style="color: #00ffff;"> in</span> place. First we look for the DNS
+  resolvers, then we use <span style="color: #ffa07a;">"dig"</span> utility to query for SRV registries:
+
+cat /etc/resolv.conf
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So we have more than one resolver; we can choose, for example, DNS resolver at
+</span>  10.168.1.1 passing it to dig this way: <span style="color: #ffa07a;">"dig @10.168.1.1 &lt;query&gt;"</span> Therefore:
+
+  Using <span style="color: #ffa07a;">"dig"</span> and SRV registries for discovering LDAP servers:
+
+dig @10.168.1.1 _ldap._tcp.casafx.dyndns.org SRV +short
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Using "dig" and SRV registries for discovering Kerberos servers:
+</span>
+dig @10.168.1.1 _kerberos._udp.casafx.dyndns.org SRV +short
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Using "dig" and SRV registries for discovering AFS servers:
+</span>
+dig @10.168.1.1 _afs3-prserver._udp.casafx.dyndns.org SRV +short
+dig @10.168.1.1 _afs3-vlserver._udp.casafx.dyndns.org SRV +short
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">As a conclusion, all our servers can be discovered and are located
+</span>  both,<span style="color: #00ffff;"> in</span> dklab1 and dklab2.
+
+clear
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Let us now concentrate in one of the processes, the retrieving of account
+</span>  metadata from LDAP. As we mentioned, NSS subsystem is responsable to do that
+  on behalf of us.
+
+  A way of testing that all is well configured and NSS can reach specifically
+  umea metadata stored<span style="color: #00ffff;"> in</span> LDAP is using a program which interfaces NSS. One
+  possibility is the <span style="color: #ffa07a;">"id"</span> program. It can look for metadata such as uid and gid
+  numbers:
+
+id umea
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">... which means that umea is identified by 31000 number and the same goes
+</span>  <span style="color: #00ffff;">for</span> its group.
+
+  What NSS actually does to find out them is an LDAP query to a certain node.
+
+  We can represent our directory information tree<span style="color: #00ffff;"> in</span> LDAP as a trunk called
+  <span style="color: #ffa07a;">"dc=casafx,dc=dyndns,dc=org"</span>, parent of a branch called <span style="color: #ffa07a;">"accounts"</span>, parent of
+  a <span style="color: #ffa07a;">"subbranch"</span> called <span style="color: #ffa07a;">"users"</span> and, finally the leaf node for umea which stores
+  attributes such as uidNumber, gidNumber, homeDirectory, loginShell, etc. See
+  this diagram:
+
+  DIT <span style="color: #eedd82;">dc</span>=casafx, <span style="color: #eedd82;">dc</span>=dyndns, <span style="color: #eedd82;">dc</span>=org
+      &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472; <span style="color: #eedd82;">ou</span>=accounts
+      ...                            &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472; <span style="color: #eedd82;">ou</span>=users
+                                     &#9474;               &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472; <span style="color: #eedd82;">uid</span>=umea
+                                     ...             ...
+
+  This way, the LDAP query made by NSS should be something like this one:
+
+ldapsearch -LLL -Q                                                       <span style="color: #ffa07a;">\</span>
+         -b <span style="color: #ffa07a;">"uid=umea,ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org"</span> <span style="color: #ffa07a;">\</span>
+         homeDirectory uidNumber gidNumber loginShell
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">As you can see, we get the same numbers we got before with "id" program and
+</span>  NSS, but this time directly querying the source, emulating NSS behaviour. We
+  have also asked for loginShell and homeDirectory as NSS will do during log-in
+  process. The value recieved for homeDirectory let us think that umea home
+  directory is located on AFS:
+
+  /afs/casafx.dyndns.org/user/u/um/umea
+
+clear
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">We have explored LDAP metadata retrieving. The other two main subprocesses of
+</span>  centralized log-in were Kerberos and AFS authentication.
+
+  About this, we could manually run <span style="color: #ffa07a;">"kinit"</span> program, which asks us for a
+  password, then it send that password to Kerberos AS server which,<span style="color: #00ffff;"> in</span> turn and
+  <span style="color: #00ffff;">if</span> correct, issue a TGT ticket that <span style="color: #ffa07a;">"kinit"</span> stores<span style="color: #00ffff;"> in</span> a local credential
+  cache.
+
+  Then, we could run <span style="color: #ffa07a;">"aklog"</span> command, it uses last TGT ticket to get an ST
+  ticket for AFS; this service ticket is used to authenticate against AFS PS
+  server to transparently get an AFS token, credential which let us manipulate
+  our home directory<span style="color: #00ffff;"> in</span> AFS.
+
+  The fact that after an initial authentication (against Kerberos AS, getting a
+  TGT credential) the subsequent ones happen automatically and without
+  disturbing the user asking for another password is called SSO (Single Sign
+  On)<span style="color: #b0c4de;">.</span> It is a very desirable feature of a Kerberos deployment when all the
+  services (not only AFS) are prepared to use it. It is our case, by the way.
+
+  Anyway, it is not necessary to illustrate this any further explicitly running
+  <span style="color: #ffa07a;">"kinit"</span> and <span style="color: #ffa07a;">"aklog"</span> programs as we did for ldapsearch while talking about
+  LDAP retrieving. The intesting thing is to check if those authentications we
+  have been talking about are taken automatically by PAM libraries and, so,
+  login program and log-in process. We have to add that, of course, a success
+  <span style="color: #00ffff;">in</span> Kerberos AS authentication implies a success<span style="color: #00ffff;"> in</span> log-in authentication.
+
+  So, it is time we log-in as umea using <span style="color: #ffa07a;">"login"</span> program:
+
+clear
+login umea
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">( password was "umeapa55" without quotes )
+</span>
+  Now, we can ask who are we now: we were root, but after log-in we are umea:
+whoami
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">We can check that our current shell is what was indicated in LDAP: /bin/bash
+</span><span style="color: #b0c4de;">echo</span> $<span style="color: #eedd82;">SHELL</span>
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">We can also check that our current directoy has changed to that one, as we
+</span>  saw, on our AFS cell: /afs/casafx.dyndns.org/user/u/um/umea/
+
+<span style="color: #b0c4de;">pwd</span>
+ls
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">The fact that we can use 'ls' on AFS can only be because during log-in we
+</span>  got, automatically as we promised, proper credentials. It is time to list
+  those credentials from their cache.
+
+  We use <span style="color: #ffa07a;">"klist"</span> to list Kerberos credentials. Two lines with something like
+  <span style="color: #ffa07a;">"krbtgt/..."</span> and <span style="color: #ffa07a;">"afs/..."</span> appears. As we can figure out, they correspond
+  to the TGT and AFS ST tickets, respectively, we talked about.
+
+klist | grep -E <span style="color: #ffa07a;">'(krbtgt|afs)'</span>
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Here they are. We can also see our AFS token, the AFS specific credential,
+</span>  with <span style="color: #ffa07a;">"tokens"</span> command:
+
+tokens | grep afs
+clear
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Credentials in place, we can test the effect of changing computer in
+</span>  situ using SSH. This is a very interesting aspect of our infraestructure:
+
+  - Specifically, this let us<span style="color: #00ffff;"> in</span> situ use the maybe superior resources of
+    another machine, but without altering our context: keeping our identity,
+    home directory and its files, programs even.
+
+  - And second, SSH authentication happens transparently, without any
+    disturbing, thanks to Kerberos SSO.
+
+
+  So, being our current host dklab1:
+hostname --fqdn
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Let us conmute to dklab2 using SSH:
+</span><span style="color: #ff7f24;">###</span><span style="color: #ff7f24;">ssh  -o "GSSAPIDelegateCredentials yes" -o "StrictHostKeyChecking no" dklab2
+</span>ssh  -o <span style="color: #ffa07a;">"GSSAPIDelegateCredentials yes"</span> dklab2
+
+hostname --fqdn
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So it was dklab1, and now is dklab2 as expected. Although we are using
+</span>  other physical resources, all remains the same. We can check it:
+
+  Same home directory and its contents respect to what we see while<span style="color: #00ffff;"> in</span> dklab1:
+
+<span style="color: #b0c4de;">pwd</span>
+ls
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Even the same programs are there if administrator decides something like
+</span>  that. For example, our shell interpreter or <span style="color: #ffa07a;">"klist"</span> command are available
+  as it happened while<span style="color: #00ffff;"> in</span> dklab1:
+
+<span style="color: #b0c4de;">echo</span> $<span style="color: #eedd82;">SHELL</span>
+which klist
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">The other key aspect of our SSH login was that SSO is used: "ssh" command
+</span>  did not prompt for a password during log-in. We can see the corresponding
+  Kerberos ST (service ticket) <span style="color: #00ffff;">for</span> SSH acquired to achieve this (by the way, it
+  is not necessary to get another credential, that <span style="color: #ffa07a;">"token"</span> was just an AFS
+  specific thing)<span style="color: #b0c4de;">.</span> To check that we have to first return to dklab1.
+
+  But before it is worth to mention that our initial credential (TGT ticket we
+  got during initial log-in) was copied from dklab1 to dklab2, making it
+  available now, making SSO possible for hypothetical future authentications.
+
+  ... former credential copied from dklab1 to dklab2:
+
+klist
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">And now yes, after showing this copy aspect, we wanted to return to dklab1
+</span>  and show Kerberos ST ticket that let us make SSO during SSH:
+
+<span style="color: #00ffff;">exit</span>
+klist  | grep host/dklab2
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Here it is Kerberos ST ticket for SSH.
+</span>
+<span style="color: #00ffff;">exit</span>
+<span style="color: #00ffff;">exit</span>
+clear
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Until this, we have explored how log-in sets up a useful environment to use
+</span>  our computer resources, wherever they are. Next action is to run programs,
+  such as clients of other services of our telematic infrastructure. About
+  this, you can play the rest of ttyrec videos as a way of demonstration.
+
+
+  F&#233;lix.
+</pre>
+
+
+
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

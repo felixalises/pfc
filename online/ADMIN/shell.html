@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-21 13:04:27 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,shell,Debian,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>SHELL</i>
+</p>
+</div>
+
+
+
+
+<pre class="src src-text">                    dklab1                               dklab2              
+        ---------------------------------   ---------------------------------
+           / 
+ Enduser  |  
+services /   ...
+         \  
+          |
+           \ SHELL  nslcd                        SHELL  sssd 
+             ------------------------            ------------------------
+           / 
+  Base    |  
+services /   ...
+         \   
+          |  
+           \
+             ------------------------            ------------------------
+           / 
+ Dressed  |     
+ machine &lt;   ...
+          |  ========================            ========================      
+           \ ...
+             ========================            ========================
+</pre>
+
+
+
+<p>
+See <code>/etc/pam.d/</code>, <code>/etc/nsswitch.conf</code>
+</p>
+<ul>
+<li>
+Implementation:
+Being our base services layer in place, each machine of our computers
+equipment has to be slighty configured to let log-in programs use centralized
+accounts. Of course, it is an OS dependant process:
+<ul>
+<li>
+Debian was our reference platform, indeed, we also used dklab1 and dklab2
+to deploy this client rol. Two specific pieces of software had to be
+installed: Jong's libnss-ldapd, and Allbery's libpam-krb5 and
+libpam-afs-session. The first one refers to NSS, an OS subsystem to resolve
+different types of metadata from different types of sources, such as
+LDAP. It includes a daemon called "nslcd", drawed in our diagram
+above. Alternatives to these pieces of software exits: a project called SSS
+has implemented "libnss-sss" and "sssd", with roaming scenarios in mind. We
+used dklab2 to exemplify an SSS software stack deployment.
+
+<p>
+On the other hand, PAM is an authentication subsystem that is able, helped
+by NSS and others, to authenticate users using different authentication
+schemas, such as Kerberos; additionally it can get tokens from AFS. As we
+have said about NSS, there is an alternative implementation by SSS project
+called "libpam-sss" that we used in dklab2.
+</p>
+</li>
+<li>
+OSX and, specially, Windows were also explored until some extent. We
+are not going to say anything about those now, though.
+
+</li>
+</ul>
+</li>
+<li>
+Justification: POSIX shell is a generic and powerfull person-system service.
+
+</li>
+<li>
+Log-in workflow:
+
+<p>
+The next diagram, explained below, reveals how a log-in program interacts
+with PAM, NSS and they, in turn, with our base services to complete a log-in
+process.
+</p>
+
+
+</li>
+</ul>
+
+
+<pre class="src src-text">1)
+  +------------------+
+  | "login" program  |
+  |linked against PAM|
+  +-&#183;----------------+
+    &#183;
+    &#183;
+    .
+    .         | DNS SRV/A | AS/TGS  | LDAP  I              AFS                |
+    .         |   named   | krb5kdc | slapd I ptserver | vlserver | fileserver|
+    .         ============+=========+=======+==========+==========+============
+2) NSS        |   _krb?   |         |       I          |          |           |
+    `---------------,     |         |       I          |          |           |
+              |    /      |         |       I          |          |           |
+    ,-------------&#183;       |         |       I          |          |           |
+3)libpam-krb5 |           |   AS    |       I          |          |           |
+    `--------------------------,    |       I          |          |           |
+     tgt      |           |   /     |       I          |          |           |
+    ,------------------------&#183;      |       I          |          |           |
+4)libpam-afs  |           |   TGS   |       I          |          |           |
+    `--------------------------,    |       I          |          |           |
+     st       |           |   /     |       I          |          |           |
+    ,------------------------&#183;      |       I          |          |           |
+5)  |         |  _prsrv?  |         |       I          |          |           |
+    `---------------,     |         |       I          |          |           |
+              |    /      |         |       I          |          |           |
+    ,-------------&#183;       |         |       I          |          |           |
+6)  |         |           |         |       I          |          |           |
+    `---------------------------------------------,    |          |           |
+     token    |           |         |       I    /     |          |           |
+    ,-------------------------------------------&#183;      |          |           |
+7) NSS        |  _ldap?   |         |       I          |          |           |
+    `---------------,     |         |       I          |          |           |
+              |    /      |         |       I          |          |           |
+    ,-------------&#183;       |         |       I          |          |           |
+8)libnss-ldapd|           |         |       I          |          |           |
+    `---------------------------------,home I          |          |           |
+              |           |         | |shellI          |          |           |
+              |           |         | /uid  I          |          |           |
+    ,--------------------------------&#183; ...  I          |          |           |
+9) NSS        |  _vlsrv?  |         |       I          |          |           |
+    `---------------,     |         |       I          |          |           |
+              |    /      |         |       I          |          |           |
+    ,-------------&#183;       |         |       I          |          |           |
+10)openafs.ko |           |         |       I          |~/.bashrc?|           |
+    `--------------------------------------------------------,    |           |
+              |           |         |       I          |    /     |           |
+    ,------------------------------------------------------&#183;      |           |
+11) |         |           |         |       I          | [dklab2] |           |
+    |         |           |         |       I          |          |           |
+    `-----------------------------------------------------------------,       |
+              |           |         |       I          |          |  /.bashrc |
+12) ,---------------------------------------------------------------&#183;         |
+    |         |           |         |       I          |          |           |
+   \ /        |           |         |       I          |          |           |
+    '         +===========+=========+=======+==========+==========+===========+
+   Done.      | DNS SRV/A | AS/TGS  | LDAP  I              AFS                |
+              |   named   | krb5kdc | slapd I ptserver | vlserver | fileserver|
+</pre>
+
+
+
+<ol>
+<li>
+A log-in program such as "login" asks user for a username and a password.
+
+</li>
+<li>
+PAM libraries take action and delegate to NSS the discovering of where
+Kerberos Authentication server is. This is made thanks to a DNS SRV lookup
+for _kerberos registry.
+
+</li>
+<li>
+Then, libpam-krb5 is ready to connect Kerberos AS, use the username and
+password and get Kerberos Ticket Granting Ticket, TGT, as a credential for
+future, SSO, authentications for other services.
+
+</li>
+<li>
+No sooner said than done, libpam-afs-session software uses TGT to get a
+Service Ticket, ST, for AFS.
+
+</li>
+<li>
+AFS is special: ST is not enough, libpam-afs-session has also to use ST
+against AFS ptserver server so it gives back an AFS token credential.
+The first step is a DNS SRV lookup for _afs3-prserver registry.
+
+</li>
+<li>
+Discovered, a connection to one of our prserver's is made and AFS token
+is retrieved.
+
+</li>
+<li>
+Authentication is done, but log-in process is more than that. An
+environment has to be set up, such as uid/gid values that authorize
+users, a shell program, home directory&hellip; For that reason, our next task
+is to retrieve account information from LDAP. We do not know where slapd
+servers are, so a DNS SRV lookup for _ldap is made.
+
+</li>
+<li>
+Then, libnss-ldapd (using a companion daemon, nlscd) can retrieve account
+variables such as uid, home directory or shell program. Done this, let's
+suppose that the prefered shell is bash. Probably bash has to read an
+initialization file ".bashrc" located at user home directory, which is
+in AFS. Since AFS is a distributed file system, we do not know where a
+file is, instead we ask a volumen location server, "vlserver", which file
+server, "fileserver", stores the volume where that ".bashrc" file really
+resides.
+
+</li>
+<li>
+Therefore, bash uses NSS to discover where AFS vlserver's are, using DNS
+SRV registry _afs3-vlserver.
+
+</li>
+<li>
+Then bash, through AFS cache manager (that is, a kernel module called
+openafs.ko) queries one of our vlserver's and discover that a
+fileserver listening on, for example, dklab2, stores ".bashrc" file.
+
+</li>
+<li>
+AFS cache manager connects and retrieves ".bashrc" file from that precise
+fileserver so that bash can read and interpret it.
+
+</li>
+<li>
+So, the working directory is set to home in AFS, the rest of the
+environment is set, Kerberos TGT and AFS tokens are in place, a shell
+prompt appears and our user can use the computer and our telematic
+infrastructure.
+
+</li>
+</ol>
+
+<p>(Of course, this process happens for both, graphic and text log-in software
+linked against PAM libraries).
+
+</p>
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

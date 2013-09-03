@@ -1,0 +1,651 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-23 00:32:11 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,DNS,NTP,LDAP,KERBEROS,AFS,SMTP,IMAP,MANAGESIEVE,POSIX,Debian,shell,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>MAIL</i>
+</p>
+</div>
+
+<p>
+Asynchronous person-person service implementation. Features:
+</p>
+<ol>
+<li>
+The user can send, recive and manage electronic mails (including automatic
+management thanks to Sieve filters).
+</li>
+<li>
+Spam, antivirus and other filtering possibilities.
+It is implemented through delivery time filtering (Spamassassing), origin
+IP based verification (SPF), and digital firm based verification (DKIM).
+Antivirus scanning, this time in SMTP time, is based in Clamav.
+</li>
+<li>
+Bouncing mails when delivery has failed.
+</li>
+<li>
+The user can use an intermediary smarthost (based on his Gmail or Live
+account) to, conditioned upon the recipient, send mails through it.
+</li>
+<li>
+Vacation mails.
+</li>
+<li>
+Automatic forwarding of emails.
+</li>
+<li>
+Aliases support.
+</li>
+<li>
+Additional (and optional) delivery in AFS home (procmail based).
+</li>
+<li>
+Quota support.
+</li>
+<li>
+Size filtering.
+
+<p>
+The features from 4 to 12 correspond to Exim4 mail routing configuration,
+working thanks to information retrived from our LDAP directory, among
+others.
+</p>
+<p>
+That is possible thanks to an LDAP schema provided by Qmail-ldap
+proyect and an excellent routing/transport configuration by Edison Wong,
+modified and adapted by us. Additionally, Qmail-ldap schema was extended
+to support conditional smarthost feature; we used a subspace of the
+private OID space for our classes and attributes and designed related
+Exim4 routers and transports.
+</p>
+</li>
+<li>
+Quota support
+</li>
+<li>
+Mail tagging
+</li>
+<li>
+Automatic subscription to public mail accounts (bulletin boards etc).
+
+<p>
+They are based on standard IMAP features, implemented by Dovecot. For
+example we used Imap Namespaces and Imap Subscription system for public
+(shared) mail accounts.
+</p>
+</li>
+<li>
+Remote administration of Sieve filters.
+This is the purpose of the MANAGESIEVE protocol, already implemented by
+Dovecot. As it happens with SMTP and IMAP, it is able to use SASL-GSSAPI
+(and, for that reason, KERBEROS) for single sign on.
+</li>
+<li>
+Confidenciality.
+It is TLS based, the servers use X.509v3 certificates (certified by our
+own CA).
+</li>
+<li>
+Graphic and command line user interfaces.
+Mozilla Thunderbird and mutt were chosen. When composing an email,
+autocompleting names and addresses from LDAP is possible.
+
+</li>
+</ol>
+
+<p>There are some ttyrec videos (35 minutes). Please, run:
+</p>
+
+
+<pre class="src src-sh">ttyplay ~/USER/TTYREC/mail.1.preliminaries.ttyrec
+ttyplay ~/USER/TTYREC/mail.2.simple_mail_sending.ttyrec
+ttyplay ~/USER/TTYREC/mail.3.spam_and_managesieve.ttyrec
+ttyplay ~/USER/TTYREC/mail.4.antivirus.ttyrec
+ttyplay ~/USER/TTYREC/mail.5.mail_to_non_existent_account.ttyrec
+ttyplay ~/USER/TTYREC/mail.6.aliases_support.ttyrec
+ttyplay ~/USER/TTYREC/mail.7.vacation_mail.ttyrec
+</pre>
+
+
+
+
+
+<p>
+( A transcription of them, follows. Feel free to play using this commands as
+a reference. )
+</p>
+
+
+<pre class="src src-sh">-
+                    MAIL SERVICES DEMOSTRATION
+&#172;
+                    ( Useful  ttyplay  keybindings:
+
+                      &lt;space&gt;  jump to next event, do not wait!
+                      0,1        pause or set 1x speed.
+                      Control-c  exit.
+                    )
+
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Preliminaries
+</span>
+  Mails are stored<span style="color: #00ffff;"> in</span> AFS. This can be more or less appropiate but, for us,
+  is an opportunity to experiment with AFS used by servers. Appropiate
+  configuration (dotlocks, copies with no hardlinks, etc) were taken to make
+  this possible.
+
+  We can access mailboxes using IMAP or directly exploring umea and aemu
+  mailboxes<span style="color: #00ffff;"> in</span> AFS, saving time<span style="color: #00ffff;"> in</span> these tests. But,<span style="color: #00ffff;"> in</span> that case, we need
+  a Kerberos TGT ticket for <span style="color: #ffa07a;">"root/admin"</span> identity, which is mapped<span style="color: #00ffff;"> in</span> AFS
+  (actually,<span style="color: #00ffff;"> in</span> all our services) to have administrator rights.
+
+kinit -p root/admin; aklog
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">The corresponding volumes for mail storage are mounted in AFS:
+</span>
+<span style="color: #b0c4de;">cd</span> /afs/casafx.dyndns.org/
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">That is our cell mount point. Our storage space for mailboxes is
+</span>  under service/mail:
+<span style="color: #b0c4de;">cd</span> service/mail/
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Here are placed the corresponding subtrees for umea and for aemu, as
+</span>  well as a global directory for sieve filters and a Public directory for
+  public newsletters:
+
+tree -d ./
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Then, we can use "mutt" program to directly open (-f) read only (-R) those
+</span>  Maildir mailboxes and take a look to their inboxes.
+
+  So root/admin can directly (without IMAP) open aemu mailbox:
+mutt -R -f a/ae/aemu/Maildir/
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">In the same way, umea mailbox can be directly opened:
+</span>mutt -R -f u/um/umea/Maildir/
+<span style="color: #b0c4de;">cd</span>
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Users can not do that (accessing AFS mailboxes directly) and have to
+</span>  use IMAP to access their mailboxes.
+
+  But we wanted to explore more possibilities, and system is configured<span style="color: #00ffff;"> in</span> a
+  way that users can activate, additionaly to the delivery<span style="color: #00ffff;"> in</span> their mailbox
+  under IMAP, to have a second delivery at home directory. If we explore home
+  mount points under user/ (where homes are), we can see Maildir directories
+  <span style="color: #00ffff;">for</span> this purpose, for this optional secondary delivery:
+
+  For example, umea has it activated and a Maildir at home:
+
+<span style="color: #b0c4de;">cd</span> /afs/casafx.dyndns.org/user/u/um/umea
+tree -d ./
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">The mailbox is "Maildir/", of course. Both, we as root/admin as well as
+</span>  umea can open this optional secondary mail storage directly:
+mutt -R -f Maildir/
+<span style="color: #b0c4de;">cd</span>
+clear
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Our configuration of Exim4 is conveniently dependant on information in
+</span>  LDAP. We can query LDAP server for umea user node. It is under DIT
+  <span style="color: #eedd82;">dc</span>=casafx,<span style="color: #eedd82;">dc</span>=dyndns,<span style="color: #eedd82;">dc</span>=org, specifically under <span style="color: #eedd82;">ou</span>=users,<span style="color: #eedd82;">ou</span>=accounts
+  subbranch. Let us query umea node:
+
+ldapsearch -LLL -s base <span style="color: #ffa07a;">\</span>
+         -b <span style="color: #ffa07a;">"uid=umea,ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org"</span>
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">... if you take a look near the end, you will see many attributes
+</span>  related to a mail system: mailAlternateAddress, mailQuotaSize,
+  spamassassinUserPrefs...
+
+  Finally, as a previous step to our tests, let us check if mail services
+  can be discovered through DNS SRV records. If we ask, for example,
+  dklab1 DNS server.
+
+  Submission (LMTP or,<span style="color: #00ffff;"> in</span> general terms, SMTP):
+
+dig @dklab1.casafx.dyndns.org. _submission._tcp.casafx.dyndns.org SRV +short
+
+  IMAP:
+dig @dklab1.casafx.dyndns.org. _imap._tcp.casafx.dyndns.org SRV +short
+
+  MANAGESIEVE:
+dig @dklab1.casafx.dyndns.org. _sieve._tcp.casafx.dyndns.org SRV +short
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">... so there is an instance in both, dklab1 and dklab2, as expected.
+</span>clear
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Everything in place, these are the features we are just about to explore:
+</span>
+  - Simple mail sending.
+  - Spam, managesieve features.
+  - Antivirus<span style="color: #00ffff;"> in</span> SMTP time.
+  - Mail to an inexistent centralized account.
+  - Aliases.
+  - Vacation state.
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Simple mail sending.
+</span>
+
+  The first test is as follows. We intend to send an email from aemu to
+  umea. To do that aemu uses <span style="color: #ffa07a;">"mutt"</span> mail program.
+
+  So this mutt program connects to Exim4 and, after authentication, Exim4
+  recives, routes and transports the mail according to the configuration
+  provided by LDAP attributes.
+
+  We can locally ask Exim4 about the route followed for such an hypothetical
+  email. To command a simulation like that, we use -f and -bt flags of exim4:
+
+exim4 -f aemu@casafx.dyndns.org -bt umea@casafx.dyndns.org | catc <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">-v -d+all
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">... do not worry about the intimidating output: Exim4 has found on LDAP that
+</span>      such a mail has to be delivered to umea, to umea at home and, thanks to a
+      forwarding rule, to aemu.
+
+  Being routes clear, we are going to use mutt to send an email and, later,
+  thanks to mutt IMAP support, we will check if all these three mails are,
+  finally, delivered<span style="color: #00ffff;"> in</span> their corresponding mailboxes. Here we go:
+
+clear  
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[aemu]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So, aemu sends an email:
+</span>
+     note: we are going to use mutt<span style="color: #00ffff;"> in</span> non-interactive mode, expliciting
+           everything using flags such as  -s <span style="color: #ffa07a;">"mail subject"</span>  etc. Last
+           line is the most relevant. Of course, all those flags can be
+           permanently set<span style="color: #00ffff;"> in</span> ~/.muttrc configuration file, etc.
+     note: mutt can not use DNS SRV submission registries for now and,
+           due to this, we directly give it using <span style="color: #ffa07a;">"set smtp_url"</span> option.
+           The same goes for IMAP discovering. Using other clients such
+           as graphical Mozilla Thunderbird, discovering is used and works.
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"Body: hello from aemu to umea"</span> <span style="color: #ffa07a;">\</span>
+  | mutt -e <span style="color: #ffa07a;">"set smtp_url='smtp://aemu@dklab1.casafx.dyndns.org:587/'"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"set smtp_authenticators='gssapi'"</span><span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">'set ssl_ca_certificates_file=/etc/ssl/certs/casafx-ca.crt'</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"my_hdr From: aemu@casafx.dyndns.org"</span> <span style="color: #ffa07a;">\</span>
+         -s <span style="color: #ffa07a;">"Simple mail sending."</span> -- umea@casafx.dyndns.org
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Mail was sent and Kerberos SSO has been used. Here is the credential:
+</span>klist | grep smtp
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">One of those three mails went, thanks to a forwarded rule, to aemu so let
+</span>  us check his mailbox using IMAP:
+
+mutt -d 5 -e <span style="color: #ffa07a;">'set imap_check_subscribed'</span>     <span style="color: #ffa07a;">\</span>
+        -e <span style="color: #ffa07a;">'set imap_list_subscribed = no'</span> <span style="color: #ffa07a;">\</span>
+        -e <span style="color: #ffa07a;">"set sort=reverse-threads"</span>      <span style="color: #ffa07a;">\</span>
+        -e <span style="color: #ffa07a;">'set ssl_ca_certificates_file=/etc/ssl/certs/casafx-ca.crt'</span> <span style="color: #ffa07a;">\</span>
+        -f imap://aemu@dklab1.casafx.dyndns.org
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">It is worth to mention that the subscribed mailboxes in the sidebar are
+</span>  dinamically discovered, a feature of IMAP protocol used by mutt thanks to
+  the appended flags.
+
+  Some of the mailboxes as well as the subscription state may be set by the
+  administrator. This is the mechanism used to autosubscribe users to public
+  mail bulletins and is the case of the last mailbox, <span style="color: #ffa07a;">"newsletter"</span>.
+
+  We used -d flag to generate a debugging file, where we can find
+  a trace about subscribing dialog between mutt and Dovecot:
+
+grep -E <span style="color: #ffa07a;">'(LIST \(|Root delimiter|LSUB \(\)|Subscribing to)'</span> .muttdebug0
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">As it happened while SMTP AUTH, Kerberos SSO has been used for IMAP, here
+</span>  is the corresponding ST credential:
+
+klist | grep imap
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[umea]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">The other two mails went to the actual receiver, umea, so we check his
+</span>  mailbox behind IMAP.
+mutt -e <span style="color: #ffa07a;">'set imap_check_subscribed'</span> -e <span style="color: #ffa07a;">'set imap_list_subscribed = no'</span> <span style="color: #ffa07a;">\</span>
+     -e <span style="color: #ffa07a;">"set sort=reverse-threads"</span> <span style="color: #ffa07a;">\</span>
+     -e <span style="color: #ffa07a;">'set ssl_ca_certificates_file=/etc/ssl/certs/casafx-ca.crt'</span> <span style="color: #ffa07a;">\</span>
+     -f imap://umea@dklab1.casafx.dyndns.org
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">... so it was there. And, about the second copy for umea, it went to his
+</span>      mailbox at home directory, so we point mutt to ~/Maildir:
+
+mutt -f ~/Maildir
+clear
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Although the generation of two extra mails maybe confused you, they are just
+</span>  an excuse to show the important question: LDAP, Exim4, mechanisms of delivery
+  on AFS and IMAP work properly together, no matter our hypothetical special
+  needs and configuration.
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Finally, as "root/admin", we can check directly all those mailboxes, it is
+</span>  what we will do<span style="color: #00ffff;"> in</span> our next tests, saving time respect to IMAP approach.
+
+  <span style="color: #ffa07a;">" mutt -R -f /afs/casafx.dyndns.org/service/mail/a/ae/aemu/Maildir/
+    mutt -R -f /afs/casafx.dyndns.org/service/mail/u/um/umea/Maildir/
+    mutt -R -f /afs/casafx.dyndns.org/user/u/um/umea/Maildir/         "</span>
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[aemu]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Spam, managesieve features.
+</span>
+  This time, aemu sends an email that can be considered as spam. Exim4 will send
+  it to spamassassing scanner and, identified as spam and tagged as such, it
+  will be redirected at delivery time by a sieve filter.
+
+  So, let aemu send a mail with GTUBE mark:
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">'XJS*C4JDBQADN1.NSBN3*2IDNEN*GTUBE-STANDARD-ANTI-UBE-TEST-EMAIL*C.34X'</span><span style="color: #ffa07a;">\</span>
+  | mutt -e <span style="color: #ffa07a;">"set smtp_url = 'smtp://aemu@dklab1.casafx.dyndns.org:587/'"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"set smtp_authenticators = 'gssapi'"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">'set ssl_ca_certificates_file=/etc/ssl/certs/casafx-ca.crt'</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"my_hdr From: aemu@casafx.dyndns.org"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"set sort=reverse-threads"</span> <span style="color: #ffa07a;">\</span>
+         -s <span style="color: #ffa07a;">"Spam, managesieve features."</span> umea@casafx.dyndns.org
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Mail has been tagged and a sieve filter has stored it appart.
+</span>  To know where are stored these types of emails, we can take a look to the
+  corresponding sieve filter. If it is managed by aemu user, he uses
+  MANAGESIEVE protocol to manipulate it. So do we:
+
+clear
+
+sieve-connect <span style="color: #ffa07a;">\</span>
+            -a aemu -u aemu -m GSSAPI -r CASAFX.DYNDNS.ORG <span style="color: #ffa07a;">\</span>
+            -server dklab1.casafx.dyndns.org <span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">--debug --debugsasl
+</span> ls
+ view si.sieve
+ quit
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Ups!, there was only one sieve filter, but that (trivial, hello world)
+</span>  filter does not deal with spam. The reason is that our spam filter is
+  global so it has been compiled and deposited by administrator<span style="color: #00ffff;"> in</span> other
+  place.
+
+  We are going to that place but, before, we summarize that <span style="color: #ffa07a;">"sieve-connect"</span>
+  has illustrated an implementation of a MANAGESIEVE command line client.
+  It is worth to mention that, unlike other implementations, it can use
+  KERBEROS SSO. Here is the credential adquired and used:
+
+klist | grep sieve
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So the global sieve filter dealing with spam is under service/mail/sieve.
+</span>  The filter is showed following, take attention to <span style="color: #ffa07a;">"fileinto"</span> line:
+cat /afs/casafx.dyndns.org/service/mail/sieve/00-global.sieve
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So, according to it, spam is stored in a mailbox called "Spam". To take
+</span>  less time, let root/admin directly access aemu Spam mailbox:
+
+mutt -R -f /afs/casafx.dyndns.org/service/mail/a/ae/aemu/Maildir/.Spam
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[aemu]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Antivirus.
+</span>
+  This time, we send a message that can be considered as malware. Exim4 will
+  send it to clamav scanner but, this time, on SMTP time so it will be
+  rejected and not stored. Mutt will print a received 550 message about this,
+  on screen.
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'</span> <span style="color: #ffa07a;">\</span>
+  | mutt -e <span style="color: #ffa07a;">"set smtp_url = 'smtp://aemu@dklab1.casafx.dyndns.org:587/"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"set smtp_authenticators = 'gssapi'"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">'set ssl_ca_certificates_file=/etc/ssl/certs/casafx-ca.crt'</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"my_hdr From: aemu@casafx.dyndns.org"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"set sort=reverse-threads"</span> <span style="color: #ffa07a;">\</span>
+         -s <span style="color: #ffa07a;">"Virus."</span> umea@casafx.dyndns.org
+   ...
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So there it was the 550 message, it has been detected as malware, SMTP
+</span>  communication did not continue any further.
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Aliases.
+</span>
+  Dealing with aliases: if aemu sends an email to postmaster, Exim4 will find
+  <span style="color: #00ffff;">in</span> LDAP that postmaster is an alias of umea. We can check that with this
+  LDAP query on umea node, we ask for <span style="color: #ffa07a;">"mailAlternateAddress"</span> attribute, which
+  indicates current mail aliases for umea:
+
+ldapsearch -LLL -x                                                       <span style="color: #ffa07a;">\</span>
+         -b <span style="color: #ffa07a;">"uid=umea,ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org"</span> <span style="color: #ffa07a;">\</span>
+         mailAlternateAddress | catc
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So, yes, postmaster is an alias of umea according to last line.
+</span>
+  Let aemu send a mail to postmaster, then.
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[aemu]
+</span>
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"postmaster"</span> <span style="color: #ffa07a;">\</span>
+  | mutt -e <span style="color: #ffa07a;">"set smtp_url='smtp://aemu@dklab1.casafx.dyndns.org:587/'"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"set smtp_authenticators='gssapi'"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">'set ssl_ca_certificates_file=/etc/ssl/certs/casafx-ca.crt'</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"my_hdr From: aemu@casafx.dyndns.org"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"set sort=reverse-threads"</span> <span style="color: #ffa07a;">\</span>
+         -s <span style="color: #ffa07a;">"Aliases."</span> postmaster@casafx.dyndns.org
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Since postmaster is treated as an email for umea and, as we know since our
+</span>  first test <span style="color: #ffa07a;">"Simple mail sending"</span>, it generates three types of email. We can
+  check that they have been received by umea, umea at home and aemu:
+
+  aemu common delivery:
+mutt -R -f /afs/casafx.dyndns.org/service/mail/a/ae/aemu/Maildir/
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">umea common delivery:
+</span>mutt -R -f /afs/casafx.dyndns.org/service/mail/u/um/umea/Maildir/
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">and umea home delivery:
+</span>mutt -R -f /afs/casafx.dyndns.org/user/u/um/umea/Maildir/
+
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[aemu]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Inexistent centralized account.
+</span>
+
+  This time we are going to send an email to a non-existen mail account
+  such as nonexistent@casafx.dyndns.org:
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"non-existent account"</span><span style="color: #ffa07a;">\</span>
+  | mutt <span style="color: #ffa07a;">\</span>
+     -e <span style="color: #ffa07a;">"set smtp_url = 'smtp://aemu@dklab1.casafx.dyndns.org:587/'"</span> <span style="color: #ffa07a;">\</span>
+     -e <span style="color: #ffa07a;">"set smtp_authenticators = 'gssapi'"</span> <span style="color: #ffa07a;">\</span>
+     -e <span style="color: #ffa07a;">'set ssl_ca_certificates_file=/etc/ssl/certs/casafx-ca.crt'</span> <span style="color: #ffa07a;">\</span>
+     -e <span style="color: #ffa07a;">"my_hdr From: aemu@casafx.dyndns.org"</span> <span style="color: #ffa07a;">\</span>
+     -e <span style="color: #ffa07a;">"set sort=reverse-threads"</span> <span style="color: #ffa07a;">\</span>
+     -s <span style="color: #ffa07a;">"Inexistent centralized account."</span> nonexistent@casafx.dyndns.org
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">As a result, an automatically generated mail is sent to sender aemu.
+</span>  Exim4 is processing the situation and generating such a mail.
+
+  We can check when it finished inspecting its queue with pfqueue or,
+  more simple, mailq:
+
+mailq
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">It is sent, so let us open aemu mailbox:
+</span>
+mutt -R -f /afs/casafx.dyndns.org/service/mail/a/ae/aemu/Maildir/
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Vacation.
+</span>
+  Our last test is about vacation warnings. This time we are going to
+  activate for umea vacation mode<span style="color: #00ffff;"> in</span> LDAP. So if aemu sends an email
+  to umea, vacation mode implies both, an usual delivery as well as,
+  additionally, a vacation mail sent back to the sender.
+
+  First of all, we modify the corresponding attribute<span style="color: #00ffff;"> in</span> LDAP
+  (<span style="color: #ffa07a;">"deliveryMode"</span>) <span style="color: #00ffff;">for</span> umea user<span style="color: #00ffff;"> in</span> order to activate vacation mode:
+
+cat &lt;&lt;EOF | ldapmodify -Q<span style="color: #ffff00; font-weight: bold;">
+dn: uid=umea,ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org
+changetype: modify
+replace: deliveryMode
+deliveryMode: reply
+EOF
+</span>ldapsearch -LLL -Q                                                       <span style="color: #ffa07a;">\</span>
+           -b <span style="color: #ffa07a;">"uid=umea,ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org"</span> <span style="color: #ffa07a;">\</span>
+           deliveryMode | catc
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[aemu]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So aemu wanted to send an email to umea:
+</span>
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">"   If deliveryMode is 'replay' (vacation mode), a bounced
+            mail is additionally generated to this email."</span> <span style="color: #ffa07a;">\</span>
+  | mutt -e <span style="color: #ffa07a;">"set smtp_url = 'smtp://aemu@dklab1.casafx.dyndns.org:587/'"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"set smtp_authenticators = 'gssapi'"</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">'set ssl_ca_certificates_file=/etc/ssl/certs/casafx-ca.crt'</span> <span style="color: #ffa07a;">\</span>
+         -e <span style="color: #ffa07a;">"my_hdr From: aemu@casafx.dyndns.org"</span> <span style="color: #ffa07a;">\</span>
+         -s <span style="color: #ffa07a;">"Vacation."</span> umea@casafx.dyndns.org
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Vacation mail is being generated:
+</span>pfqueue
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">The body of vacation mail is retrieved from LDAP. Let us check it directly
+</span>  loading vacation mail<span style="color: #00ffff;"> in</span> aemu mailbox:
+
+mutt -R -f /afs/casafx.dyndns.org/service/mail/a/ae/aemu/Maildir/
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">There it was, very simple but enough.
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Finally, we undo LDAP changes:
+</span>
+cat &lt;&lt;EOF | ldapmodify -Q<span style="color: #ffff00; font-weight: bold;">
+dn: uid=umea,ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org
+changetype: modify
+delete: deliveryMode
+deliveryMode: reply
+EOF
+</span>
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">And that was all.
+</span>
+  Until this point, we have played with a subset of the features present<span style="color: #00ffff;"> in</span>
+  this mail system.
+
+  Now we have some knowledge about email storage, scanners, sieve filters, LDAP
+  lookups and general operation; from the user point of view, service works and
+  TLS and SSO are effectively used without any disturbance.
+
+  On the other hand, we have missed features such as conditional smarthosting,
+  quota limits, size filtering... but it should be easy to guess how they work
+  from the previous examples.
+
+
+  F&#233;lix.
+</pre>
+
+
+
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

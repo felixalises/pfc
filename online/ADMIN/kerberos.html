@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-22 17:57:15 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,KERBEROS,Debian,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>KERBEROS</i>
+</p>
+</div>
+
+
+
+
+<pre class="src src-text">                    dklab1                               dklab2              
+        ---------------------------------   ---------------------------------
+           / 
+ Enduser  |  
+services /   ...                                                     
+         \   
+          |                                                                  
+           \ 
+             ------------------------            ------------------------
+           / 
+  Base    |  ...                                             
+services /   KRB5   krb5kdc                      KRB5   krb5kdc 
+         \          kadmind                             kadmind
+          |  ...
+           \
+             ------------------------            ------------------------
+           / 
+ Dressed  |     
+ machine &lt;   ...
+          |  ========================            ========================      
+           \ ...
+             ========================            ========================
+</pre>
+
+
+
+<p>
+See <code>/etc/krb5kdc/</code> and <code>/etc/krb5.conf</code>
+</p>
+<ul>
+<li>
+Implementation: MIT Kerberos.
+
+</li>
+<li>
+Justification: It is our specialized protocol for authentication security
+service, providing an SSO feature. All our communications can use it,
+except DNS and NTP.
+
+</li>
+<li>
+Storage and replication: LDAP backend.
+
+</li>
+<li>
+Principal planning and mapping.
+
+<p>
+Realm Kerberos: CASAFX.DYNDNS.ORG
+</p>
+<p>
+Principal Format: &lt;primary&gt;/&lt;instance&gt;@CASAFX.DYNDNS.ORG
+</p>
+</li>
+</ul>
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>Principal for global administrator</caption>
+<colgroup><col align="left" />
+</colgroup>
+<tbody>
+<tr><td>root/admin@CASAFX.DYNDNS.ORG</td></tr>
+</tbody>
+</table>
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>Principals for users</caption>
+<colgroup><col align="left" />
+</colgroup>
+<tbody>
+<tr><td>umea@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>aemu@CASAFX.DYNDNS.ORG</td></tr>
+</tbody>
+</table>
+
+
+
+
+<br></br>
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<caption>Principals for servers</caption>
+<colgroup><col align="left" />
+</colgroup>
+<tbody>
+<tr><td>ldap/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>ldap/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>postgres/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>postgres/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>bucardo/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG (see PostgreSQL replication)</td></tr>
+<tr><td>bucardo/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>xmpp/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>xmpp/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>jabberd2-sm/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG (see Jabberd2 sm component)</td></tr>
+<tr><td>jabberd2-sm/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>smtp/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>smtp/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>imap/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>imap/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>sieve/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>sieve/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>host/dklab1.casafx.dyndns.org@CASAFX.DYNDNS.ORG (used by SSH)</td></tr>
+<tr><td>host/dklab2.casafx.dyndns.org@CASAFX.DYNDNS.ORG</td></tr>
+<tr><td>afs/casafx.dyndns.org@CASAFX.DYNDNS.ORG (here, &lt;instance&gt; is AFS cellname)</td></tr>
+</tbody>
+</table>
+
+
+
+
+<br></br>
+<p>
+To armonize Kerberos principal format with internal identity format of each
+server, we have manipulated adequately the mapping mechanisms they
+provide. Also, some servers contemplate the existence of a special management
+account and, in that case, we assure that root/admin@CASAFX.DYNDNS.ORG is,
+after acting mapping mechanism, the chosen identity.
+</p>
+
+<ul>
+<li>
+Kerberization flowchart:
+
+<p>
+The next flowchart includes the four types of adminitration paths we can
+follow while giving kerberos support to a service.
+</p>
+
+</li>
+</ul>
+
+
+<pre class="src src-text">                             ( S T A R T )
+                                   |
+                                   |
+                                  \ /
+                    &#183;--------------&#183;--------------&#183;
+                    |    Principal creation:      |
+                    | &lt;primary&gt;/&lt;instance&gt;@&lt;REALM&gt;|
+                    &#183;--------------&#183;--------------&#183;
+                                   |
+                                   |
+                                  \ /
+                                   &#183;
+                                  /\
+                                /    \
+                              /        \
+                            /            \
+      kerberized service  /During Kerberos \     krb client
+     .___________________/ protocol, which  \________________.
+     |                    \role it assumes?/                 |
+     |                      \            /                  \ /
+     |                        \        /                     &#183;
+     |                          \    /                       /\
+     |                            \/                       /    \
+     |                                       Yes it's    /        \   No, it's
+     |                                      a server   /Is this krb \  a human
+     |                                         ._____/client a server \______.
+     |                                         |     \  for other     /      |
+     |                                         |       \  service?  /        |
+     |                                         |         \        /          |
+     |                                         |           \    /            |
+    \ /                                       \ /            \/              |
+   &#183;-&#183;-----------------------------------------&#183;-&#183;                           |
+   |             Export key to keytab            |                           |
+   |          /etc/keytab.d/&lt;srv&gt;.keytab         |                           |
+   &#183;-&#183;-----------------------------------------&#183;-&#183;                           |
+     |                                         |                             |
+     |                                         |                             |
+     |                                        \ /                            |
+     |                                         &#183;                             |
+     |                                        / \                            |
+    \ /                                     /     \                          |
+&#183;----&#183;-------------&#183;              Yes     /Is an AFS\   No                   |
+|Declare keytab in |           .________/  token also \________.             |
+|/etc/default/&lt;srv&gt;|           |         \ necessary?/         |             |
+&#183;----&#183;-------------&#183;           |           \       /           |             |
+     |                         |             \   /             |             |
+     |                         |              \ /              |             |
+     |                         |               &#183;               |             |
+     |                        \ /                             \ /            |
+     |               &#183;---------&#183;-----------&#183;          &#183;--------&#183;--------&#183;    |
+     |               |Monitor for TGT      |          |Monitor for TGT: |    |
+     |               |+AFS token           |          |                 |    |
+     |               |+parent process.     |          |                 |    |
+     |               |vim /etc/init.d/&lt;srv&gt;|          |vim /etc/inittab |    |
+     |               |and k5start setup    |          |and k5start setup|    |
+     |               &#183;---------&#183;-----------&#183;          &#183;--------&#183;--------&#183;    |
+     |                         |                               |             |
+     |                         |                               |             |
+     |                        \ /                              |             |
+     |               &#183;---------&#183;-----------&#183;                   |             |
+     |               |AFS identity creation|                   |             |
+     |               |and krb princ mapping|                   |             |
+     |               &#183;---------&#183;-----------&#183;                   |             |
+     |                         |                               |             |
+     |                         |                               |             |
+    \ /                       \ /                             \ /            |
+&#183;----&#183;-------------------------&#183;---&#183;                    &#183;------&#183;-------&#183;     |
+|         Restart server           |                    | Restart init:|     |
+|   /etc/init.d/&lt;srv&gt; restart      |                    |  kill -HUP 1 |     |
+&#183;----&#183;-------------------------&#183;---&#183;                    &#183;------&#183;-------&#183;     |
+     |                         |                               |             |
+     |                         |                               |             |
+     +-------------------------+-------------------------------+-------------+
+    (1)                        |(4)                           (3)           (2)
+                              \ /
+                               &#183;
+                           ( E N D )
+
+</pre>
+
+
+
+<p>
+Following this chart we have given kerberos support for everything.
+</p>
+<p>
+The first and common step is to create a kerberos principal for the
+interested entity. The next steps are different if that entity is going to act
+as a kerberos client or not.
+</p>
+<p>
+<b>(1)</b>
+If not, this case is the classical kerberization of a server to which users
+authenticate using Kerberos ST tickets. The important task is to export its
+principal locally to a keytab and make sure that the server, when it is
+launched, can access a KRB5_KTNAME variable pointing to the location of that
+keytab file.
+</p>
+<p>
+Otherwise, if the entity is going to act as a kerberos client and, so, it is
+going to get TGT and ST credentials, we have to different situations. In one
+case it can be a human, a user that want to authenticate to use our services;
+in the other case it can be an automata, for example our mail servers need to
+get kerberos tickets to use AFS. Let's see:
+</p>
+<p>
+<b>(2)</b>
+If it is for a human, we have the classical situation of giving a principal
+for a user of our services. There is no more actions to take (except, yes,
+that user has to remember the password associated to his principal).
+</p>
+<p>
+<b>(3)</b>
+But if it is for an automata server, some problems has to be
+overcome. Essentially, the fact that actions such as getting TGT and keeping it
+up to date can not happen interactively and has to be automated. The solution is to
+export principal to a keytab and use an special daemon, k5start, to manage
+those actions. Additionally, k5start can be, in turn, "watchdogged" by
+init. This way, init launchs and monitors k5start, which uses keytab to get TGT,
+making it available as a credential cache file (under /tmp) when server
+needs it.
+</p>
+<p>
+<b>(4)</b>
+As we have advanced, not only a TGT can be needed. Also an AFS token. But,
+in contrast to what it could seem, this extra condition change the approach
+we have followed in last paragraph. The problem is that if a server needs a
+kerberos ticket, it just has to access the credential cache file. But if the
+server has to access a token, it has to access it in kernel memory and, making
+the story short, it can happen only if it is the process which gets the token
+or a child process. We change relationships on tree file system for
+relationships on process tree. This way, if k5start can automatize the process
+of getting TGT and AFS token, it has also to be the process that launch the
+server.  So, the path is as follow: we export principal to a keytab. We edit
+server init script /etc/init.d/&lt;srv&gt; to make k5start launch the server. Of
+course, we create also an AFS identity and map it with its kerberos
+principal. Then we restart the server.
+</p>
+
+<p>
+See <code>/etc/inittab</code>, <code>/etc/keytab.d/</code>, <code>/etc/init.d/exim4</code>, <code>/etc/init.d/dovecot</code>
+
+</p>
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

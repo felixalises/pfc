@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-25 06:09:03 CEST"/>
+<meta name="author" content="Felix Alises-Casas. Illustration by Rendjith Krishnan. You can contact Felix at: "/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="DNS,NTP,LDAP,KERBEROS,AFS,SMTP,IMAP,MANAGESIEVE,POSIX,Debian,shell,deployment"/>
+<meta name="robots" content="noindex,nofollow,noarchive"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<hr/>
+<p>
+<i>Félix Alises-Casas.</i>
+</p>
+
+<div style="text-align: center">
+
+<div id="illustration.jpg" class="figure">
+<p><img src="./illustration.jpg" alt="dklab1 and dklab2 main servers illustration" title="dklab1 and dklab2 main servers illustration." /></p>
+
+</div>
+
+</div>
+
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> How to remotely connect using SSH </h2>
+<div class="outline-text-2" id="text-1">
+
+<p>Just run your <a href="http://en.wikipedia.org/wiki/Secure_Shell">SSH</a> client using these <a href="#parameters">parameters</a>:
+<br></br>
+</p>
+<div style="text-align: center">
+<table  border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
+<a name="parameters" id="parameters"></a>
+<caption>Sevice access parameters</caption>
+<colgroup><col align="left" /><col align="left" /><col align="left" /><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Host</th><th scope="col">Port</th><th scope="col">Proto</th><th scope="col">Username = Password</th><th scope="col">Important commands</th></tr>
+</thead>
+<tbody>
+<tr><td>testbed.casafx.dyndns.org</td><td>4444</td><td>SSH-2</td><td>root</td><td>screen -c testbed.screenrc</td></tr>
+<tr><td></td><td></td><td></td><td></td><td>Relevant</td></tr>
+</tbody>
+</table>
+
+
+</div>
+
+
+
+<br></br>
+
+<p>
+We can illustrate the process using well known SSH clients such as those
+provided by <a href="http://www.openssh.org/">OpenSSH</a> and <a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/">Putty</a> projects.
+</p>
+<p>
+OpenSSH client is usually preinstalled in POSIX OS's (GNU/Linux distributions,
+*BSD, MAC OSX, comercial UNIX's, etc). Putty implementation is not preinstalled
+in most cases but, additionally to POSIX, supports Windows OS.
+</p>
+
+</div>
+
+<div id="outline-container-1_1" class="outline-3">
+<h3 id="sec-1_1"><span class="section-number-3">1.1</span> OpenSSH </h3>
+<div class="outline-text-3" id="text-1_1">
+
+<p>Please, be sure that your terminal size is at least 80x33. Then, run:
+</p>
+
+
+<pre class="src src-sh">ssh -o <span style="color: #ffa07a;">"UserKnownHostsFile /dev/null"</span> -o <span style="color: #ffa07a;">"StrictHostKeyChecking no"</span> -q <span style="color: #ffa07a;">\</span>
+    root@testbed.casafx.dyndns.org -p 4444                             <span style="color: #ffa07a;">\</span>
+    -t -- screen -c testbed.screenrc
+</pre>
+
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1_2" class="outline-3">
+<h3 id="sec-1_2"><span class="section-number-3">1.2</span> Putty </h3>
+<div class="outline-text-3" id="text-1_2">
+
+<p>Please, run:
+</p>
+
+
+<pre class="src src-sh">putty -ssh testbed.casafx.dyndns.org -l root -P 4444 -cs UTF-8 -geometry 80x33
+</pre>
+
+
+
+<p>
+But if using Windows, you probably want to use Putty graphical interface by
+double-clicking on <a href="http://jakub.kotrla.net/putty/putty.exe">putty.exe</a>. In that case fill in "Session", "Window" and
+"Translation" categories as shown below. Then press "Open" button:
+</p>
+
+<div style="text-align: center">
+
+<div id="putty.png" class="figure">
+<p><img src="./putty.png" width="100%" depth="100%" alt="./putty.png" /></p>
+<p>Putty graphical configuration. Note that there is also an "Appearance" category, in case you need to increase font size.</p>
+</div>
+
+</div>
+
+<p>
+&hellip; either way, when logged-in, please run:
+</p>
+
+
+<pre class="src src-sh">screen -c testbed.screenrc
+</pre>
+
+
+
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Tips </h2>
+<div class="outline-text-2" id="text-2">
+
+<p>After logged-in, as we have mentioned, you could run <i>screen -c testbed.screenrc</i>. It launches a GNU Screen session that points you to a
+general <a href="http://testbed.casafx.dyndns.org/testbed/README"><b>README</b></a> file. This file introduce you the deployment as well as give
+you indications about how to "play" it in a secondary screen where an
+interactive shell is loaded. During your playing, <a href="http://shelr.tv/records/5058b52196608010b3000075"><i>Relevant</i></a> command is
+available and is able to remind you which are the interesting files to read.
+</p>
+<p>
+Therefore, our infraestructure is explained by several text resources that
+constitute different entry points to aspects of our deployment. These available
+resources are: html files filled with text as well as tables, diagrams or
+flowcharts; and ttyrec video demostrations. Ttyrec videos give you an idea of
+interesting commands to explore by imitation. See README file as explained.
+</p>
+<p>
+Enjoy.
+
+</p>
+<hr/>
+</div>
+</div>
+<div id="postamble">
+<p class="author"> Author: Felix Alises-Casas. Illustration by Rendjith Krishnan. You can contact Felix at: 
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

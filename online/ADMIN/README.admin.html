@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-29 19:23:42 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,DNS,NTP,LDAP,KERBEROS,AFS,SMTP,IMAP,MANAGESIEVE,POSIX,Debian,shell,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>ADMIN</i>
+</p>
+</div>
+
+<p>
+General overview of our software stack in dklab1 and dklab2, fully unfolded as
+we promised:
+</p>
+
+
+<pre class="src src-text">                    dklab1                               dklab2              
+        ---------------------------------   ---------------------------------
+           / Mail   imap-login                    Mail   imap-login
+          |         managesieve-login                    managesieve-login
+          |         dovecot-auth                         dovecot-auth
+          |         dovecot                              dovecot
+          |         spamd                                spamd
+          |         clamd                                clamd
+ Enduser /          exim4                                exim4
+services \ 
+          |  IM     jabberd2-c2c                  IM     jabberd2-c2c 
+          |         jabberd2-sm                          jabberd2-sm           
+          |         jabberd2-s2s                                             
+          |         jabberd2-router                                          
+          |                                                                  
+           \ SHELL  nslcd                         SHELL  sssd                
+             ------------------------             ------------------------
+           / AFS    fileserver                    AFS    fileserver          
+          |         volserver                            volserver           
+          |         salvager                             salvager            
+          |         buserver                             buserver            
+          |         prserver                             prserver            
+          |         vlserver                             vlserver            
+  Base    |         bosserver                            bosserver           
+services /
+         \   SQL    postgres                      SQL    postgres
+          |         bucardo
+          |                                                                  
+          |  LDAP   slapd                         LDAP   slapd               
+          |                                                                  
+          |  KRB5   krb5kdc                       KRB5   krb5kdc             
+          |         kadmind                              kadmind             
+          |                                                                  
+          |  NTP    ntpd                          NTP    ntpd                
+           \ DNS    named                         DNS    named               
+             ------------------------             ------------------------
+           /     OpenVPN tcp-server                   OpenVPN tcp-client
+ Dressed  |           TCP/IP                               TCP/IP
+ machine &lt;   OS   Debian GNU/Linux                OS   Debian GNU/Linux
+          |  ========================             ========================
+           \ HW    q e m u  x 8 6                 HW    q e m u  x 8 6
+             ========================             ========================
+
+</pre>
+
+
+<p>
+In this ADMIN/ directory there is a file describing each component.
+</p>
+
+
+<pre class="src src-sh">ls ADMIN/
+</pre>
+
+
+
+<p>
+Our suggested order reading is to follow last chart from down to top.
+</p><ul>
+<li>
+<a href="./dressed_machine.html">dressed_machine</a>
+</li>
+<li>
+<a href="./dns.html">dns</a>
+</li>
+<li>
+<a href="./ntp.html">ntp</a>
+</li>
+<li>
+<a href="./ldap.html">ldap</a>
+</li>
+<li>
+<a href="./kerberos.html">kerberos</a>
+</li>
+<li>
+<a href="./sql.html">sql</a>
+</li>
+<li>
+<a href="./afs.html">afs</a>
+</li>
+<li>
+<a href="./shell.html">shell</a>
+</li>
+<li>
+<a href="./im.html">im</a>
+</li>
+<li>
+<a href="./mail.html">mail</a>
+
+</li>
+</ul>
+
+
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

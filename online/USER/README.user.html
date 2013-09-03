@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-25 06:05:18 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,DNS,NTP,LDAP,KERBEROS,AFS,SMTP,IMAP,MANAGESIEVE,POSIX,Debian,shell,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>USER</i>
+</p>
+</div>
+
+<p>
+Services:
+</p><ol>
+<li>
+<a href="./shell_service.html">POSIX shell.</a>
+</li>
+<li>
+<a href="./im_service.html">Instant messaging and VoIP</a>.
+</li>
+<li>
+<a href="./mail_service.html">Mail</a>.
+
+
+</li>
+</ol>
+
+
+<pre class="src src-sh">ls USER/
+</pre>
+
+
+
+<p>
+Files under USER/ expose our deployment under the final user point of view,
+the person who wants to run some programs in order to enjoy the services.
+To comply with that we enumerate the features present in each service as
+well as we offer a text video, ttyrec recorded, demonstration.
+</p>
+<p>
+Being all that true, it is also a fact that we take the user point of view as
+an excuse to expose some details that serve as an introduction to
+administration technicalities (explained under ADMIN/ directory). This happens
+specially during ttyrec videos, in fact and, as you already know, we encourage
+you to imitate them to interact with interesting points of administration work.
+</p>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Important comments </h2>
+<div class="outline-text-2" id="text-1">
+
+<p>Two aspects you should be familiarized with before continuing are user accounts
+and ttyrec videos. We offer you some bits about those now:
+</p>
+
+</div>
+
+<div id="outline-container-1_1" class="outline-3">
+<h3 id="sec-1_1"><span class="section-number-3">1.1</span> Account format </h3>
+<div class="outline-text-3" id="text-1_1">
+
+<p>Centralized user accounts that let us use the services: we have
+created<sup><a class="footref" name="fnr.1" href="#fn.1">1</a></sup> two accounts. In memory of the year we studied at a
+northern Sweden city called Umeå, the names are:
+</p>
+
+
+<ul>
+<li>
+umea@casafx.dyndns.org 
+</li>
+<li>
+aemu@casafx.dyndns.org  (aemu is just the reversed of umea)
+
+</li>
+</ul>
+
+<p>Seeing that, a centralized account has the general form
+&lt;username&gt; @ &lt;domainname&gt;. There is, under the user point of view, an
+exception because shell service uses only &lt;username&gt;, so people can log in
+just as "umea" or "aemu".
+</p>
+<p>
+It is also worth to mention that, since all of our services uses KERBEROS
+for authentication, all those services are configured in a way that let
+them automatically map between Kerberos Principals and this account name
+format.
+</p>
+<ul>
+<li>
+     &lt;primary&gt;/&lt;instance&gt; @ &lt;REALM&gt;  maps  to  &lt;username&gt; @ &lt;domainname&gt;
+</li>
+<li>
+                                  or just &lt;username&gt;, case of shell service.
+
+</li>
+</ul>
+</div>
+
+</div>
+
+<div id="outline-container-1_2" class="outline-3">
+<h3 id="sec-1_2"><span class="section-number-3">1.2</span> TTYrec videos playing </h3>
+<div class="outline-text-3" id="text-1_2">
+
+<p>Please, just run ttyplay program and ttyrec file as argument:
+</p>
+
+
+<pre class="src src-sh">ttyplay /root/USER/TTYREC/&lt;file&gt;.ttyrec
+</pre>
+
+
+<p>
+You can get some control by using this three keybindings:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption></caption>
+<colgroup><col align="left" /><col align="left" />
+</colgroup>
+<thead>
+<tr><th scope="col">Keybinding</th><th scope="col">Action</th></tr>
+</thead>
+<tbody>
+<tr><td>&lt;space&gt;</td><td>jump to next event, don't wait.</td></tr>
+<tr><td>0,1</td><td>pause or set 1x speed.</td></tr>
+<tr><td>Control-c</td><td>exit.</td></tr>
+</tbody>
+</table>
+
+
+<p>
+&hellip; it could be enough, see "man ttyplay". Other player available is "ipbt"
+(reverse playing support, etc), see "man ipbt" if interested but ttyplay,
+as mentioned, is enough.
+</p>
+<p>
+If screen gets corrupted without reverting to normal, your terminal size is
+less than 80x33. Please, resize it and play again.
+</p>
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Next steps </h2>
+<div class="outline-text-2" id="text-2">
+
+<p>Now, you can continue reading, for example, shell POSIX service details:
+</p>
+
+
+<pre class="src src-sh">w3m ~/USER/shell_service.html
+ttyplay ~/USER/TTYREC/shell.ttyrec
+</pre>
+
+
+
+<hr/>
+
+
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+<p class="footnote"><sup><a class="footnum" name="fn.1" href="#fnr.1">1</a></sup> The complete sequence of steps for creating a new account are described, in spanish but still useful to be skimmed, at sections 1.7.x of: <a href="http://testbed.casafx.dyndns.org/pfc/DOCUMENTOS/ANEXOS/ANEXO-7-SHELLPOSIX.pdf">http://testbed.casafx.dyndns.org/pfc/DOCUMENTOS/ANEXOS/ANEXO-7-SHELLPOSIX.pdf</a>
+</p>
+</div>
+</div>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

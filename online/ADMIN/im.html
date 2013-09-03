@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-29 19:21:49 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,im,Debian,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>XMPP</i>
+</p>
+</div>
+
+
+
+
+<pre class="src src-text">                    dklab1                               dklab2              
+        ---------------------------------   ---------------------------------
+           / 
+ Enduser  |  ...
+services /
+         \   IM     jabberd2-c2c                 IM     jabberd2-c2c          
+          |         jabberd2-sm                         jabberd2-sm           
+          |         jabberd2-s2s                                             
+          |         jabberd2-router                                          
+          |  ...
+           \ 
+             ------------------------            ------------------------
+           / 
+  Base    |  
+services /   ...
+         \   
+          |  
+           \
+             ------------------------            ------------------------
+           / 
+ Dressed  |     
+ machine &lt;   ...
+          |  ========================            ========================      
+           \ ...
+             ========================            ========================
+</pre>
+
+
+
+<p>
+See <code>/etc/jabberd2/</code>
+</p>
+<ul>
+<li>
+Implementation: Jabberd2
+
+</li>
+<li>
+Justification: synchronous person-person service. Presence, Chat, VoIP, 
+Videoconferencing. Protocols used are XMPP, XMPP's Jingle, RTP.
+
+</li>
+<li>
+Architecture, metadata location and security:
+
+
+</li>
+</ul>
+
+
+<pre class="src src-text">Mail communications grouped in three blocks:
+
+
+                                       ,&#183;&#183;&#183;to other organizations.
+  ============                         |
+  |          |                         |
+  |          ==========================|==========================
+  |          |                         |                         |
+  |          |                         |                         ==========
+  |          |                   jabberd2-s2s                    |  LDAP  |
+  |  XMPP    |                         |                         | /      |
+  | Client --k- jabberd2-c2s --- jabberd2-router --- jabberd2-sm -+       |
+  |          |                                                   | \      |
+  |          |                                                   |  k--SQL|
+  =========================================================================
+</pre>
+
+
+
+<p>
+Communications are framed and divided in 3 vertical blocks, from left to
+right: service client, service servers, base subservices. Base subservices
+does not draw Kerberos, instead we insert a "k" letter in lines between
+entities that authenticate each other using kerberos. This happens between
+XMPP client and jabberd2-c2s component; also between jabberd2-sm component
+and postgres.
+</p>
+<p>
+XMPP clients can be Pidgin/Finch, for example. They use TLS for
+confidenciality and integrity.
+</p>
+<p>
+Jabberd2 is compound by 4 processes: c2s is the clients interface; s2s is our
+link with other federated XMPP servers; sm provides services such as roster,
+vcard, etc lookups; router is the component that interconnects all. We can
+have all components both in dklab1 and dklab2, except router that has to be
+common (we make init process to monitor it in order to keep it always alive
+and operative). It is also true that only one s2s instance can be in charge
+of default router to others. As conclusion, router and s2s are only active in
+dklab1. TLS is used for confidenciality and integrity for all communications.
+</p>
+<p>
+LDAP is used to read users information, and that way to build rosters
+automatically, as well vcards; since those are not considered sensible, they
+are transfered using anonymous and unencrypted bind.
+SQL is used for reading but also writing. It is used as cache for those
+data in LDAP, and as the main container of some volatile data, such as those
+associated with presence service, etc.
+</p>
+<ul>
+<li>
+Some notes about Asterisk: our service supports VoIP thanks to Jingle
+extension of XMPP. Jingle provides signaling of media streams, actual
+transport is p2p and clients can negotiate RTP (case of Pidgin/Finch) or IAX
+for that. But our original design included Asterisk instances to provide VoIP
+and videoconferencing.
+
+<p>
+Asterisk is a complete software PBX and thus, supports a great number of
+interesting and programmable subservices such as voicemail, call parking, on
+the flight multiconference rooms, echo latency tests, etc. We internally use
+all of that, interfaced with LDAP thanks to res_ldap. But, although we
+started to investigate how to clusterize it, along the way we realized that
+none of the VoIP protocols (we looked for IAX and SIP) support non
+SASL-GSSAPI neither other Kerberos based authentication mechanism. Until this
+is fixed, Asterisk support in this deployment remains as a future line of
+work.
+</p>
+</li>
+</ul>
+
+
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

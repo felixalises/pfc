@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-21 12:59:43 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,NTP,Debian,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>NTP</i>
+</p>
+</div>
+
+
+
+
+<pre class="src src-text">                    dklab1                               dklab2
+        ---------------------------------   ---------------------------------
+           / 
+ Enduser  |  
+services /   ...                                                     
+         \   
+          |                                                                  
+           \ 
+             ------------------------            ------------------------
+           / 
+  Base    |  
+services /   ...                                             
+         \
+          |  NTP    ntpd                         NTP    ntpd 
+           \ ...
+             ------------------------            ------------------------
+           / 
+ Dressed  |     
+ machine &lt;   ...
+          |  ========================            ========================      
+           \ ...
+             ========================            ========================
+</pre>
+
+
+
+<p>
+See <code>/etc/ntp.conf</code>
+</p>
+<ul>
+<li>
+Implementation: Ntp.org
+
+</li>
+<li>
+Justification. NTP provides synchronization between our computers. Time
+agreement is necessary for:
+<ul>
+<li>
+DB replication
+</li>
+<li>
+KERBEROS tickets has an expiration time.
+
+</li>
+</ul>
+</li>
+<li>
+NTP technologies used:
+<ul>
+<li>
+Unicast peers (or symmetric active/passive mode) between dklab1 and dklab2
+</li>
+<li>
+Client/Server mode for permanent association with international cluster pool.ntp.org
+(we don't have special Stratum 0 devices as international source).
+</li>
+<li>
+Orphan mode switching is used if they become isolated from pool.ntp.org.
+</li>
+<li>
+Dklab1 and dklab2 are discovered as a pool (also SRV is available) and
+erected as time source by the rest of our computer park.
+</li>
+<li>
+Security: Autokey v2 IFF scheme (asymmetric cryptography based).
+
+</li>
+</ul>
+</li>
+</ul>
+
+<p>Graphically, we can see all those connections as a partially directed acyclic
+graph divided in 3 zones: (1) pool.ntp.org., (2) is dklab1 and dklab2, (3) rest
+of our computer park.
+</p>
+
+
+
+<pre class="src src-text">                                                Partially directed
+            /        &#183;--------------&#183;           acyclic graph.
+   POOL    &lt;         | pool.ntp.org |           
+            \        &#183;--------------&#183;           Connections are always
+                      /           \             down to top except on
+Org. border&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;/&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;\&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;  peers were they can be
+            /       /                 \         parallel.
+           |       /                    \       
+   PEERS  /      dklab1 ------------- dklab2    Known that, arrowheads
+ (  and   \        |  \             /  |        are not represented
+  Autokey  |       |    \         /    |        because they are dynamic,
+   group  ) \      |      \     /      |        hosts continuously
+                   |        \ /        |        evaluate and choose the
+                   |        / \        |        best of thir sources.
+                   |      /     \      |     
+                   |    /         \    |     
+            /   &#183;--|--/-------------\--|----&#183;
+   LEAF    |    |  |/      C.PARK     \|    |
+   NODES  &lt;     |comput-1   ...    comput-n |
+           |    &#183;---------------------------&#183;
+            \
+</pre>
+
+
+
+<p>
+Dklab1 and dklab2 can use international pool or themselves ("peers") as time
+source while the rest of the park, leaf nodes, use only dklab1 and dklab2.
+</p>
+<p>
+At the same time, dklab1 and dklab2 form an Autokey v2 IFF group so the park
+can (it is optional) use Autokey v2 for authentication and integrity security
+services.
+</p>
+<p>
+Autokey can not be used under NAT and, said that, the connections to
+pool.ntp.org can be also protected (when available upstream).
+
+</p>
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

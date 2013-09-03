@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-21 13:01:51 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,SQL,Debian,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>SQL</i>
+</p>
+</div>
+
+
+
+
+<pre class="src src-text">                    dklab1                               dklab2              
+        ---------------------------------   ---------------------------------
+           / 
+ Enduser  |  
+services /   ...
+         \   
+          |                                                                  
+           \ 
+             ------------------------            ------------------------
+           / 
+  Base    |  ...                                             
+services /   SQL    postgres                     SQL    postgres
+         \          bucardo
+          |  ...
+          |  
+           \
+             ------------------------            ------------------------
+           / 
+ Dressed  |     
+ machine &lt;   ...
+          |  ========================            ========================      
+           \ ...
+             ========================            ========================
+</pre>
+
+
+
+<p>
+See <code>/etc/postgresql/9.0/main/</code>
+</p>
+<ul>
+<li>
+Implementation: PostgreSQL 9. Bucardo external component is used for
+replication.
+
+</li>
+<li>
+Justification: as we summarize when LDAP, it stores some volatile and well
+defined metadata on IM/Presence service.
+
+</li>
+<li>
+Replication: asynchronous, Master-Master topology, by Bucardo. PostgreSQL is
+supposed to be implementing a native synchronous multi-master replication
+mechanism for the next versions. For that reason, in the meantime, we
+have choose Bucardo as an external component replication easy to deploy and
+compatible with Kerberos authentication. Bucardo is a transitory solution
+for us.
+At the same time, asynchronous operation (Bucardo is based on SQL Triggers)
+and the fact that PostgreSQL is used for high frecuency writes could be a
+problem, but it is not in our particular case. PostgreSQL is used only by
+Jabberd2, and:
+
+<ul>
+<li>
+An instance of jabberd2-sm can not connect to more than one PostgreSQL
+instance.
+</li>
+<li>
+We can consider that, in our organization, it is not usual to use an
+IM account at the same time by different people.
+</li>
+<li>
+Fundamental data is stored in LDAP, it is not the subset in SQL.
+
+</li>
+</ul>
+
+<p>Also, Bucardo needs a PRIMARY KEY in each table (odd in dklab1, even in
+dklab2) but it is not difficult to modify Jabberd2 SQL schema to comply
+that.
+</p>
+</li>
+<li>
+Security: authentication by KERBEROS, authorization by PostgreSQL ACL's,
+integrity and confidenciality by TLS (although not really useful since the
+information stored thanks to SQL is actually not sensible).
+</li>
+</ul>
+
+
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

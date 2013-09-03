@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+lang="en" xml:lang="en">
+<head>
+<title>Distributed Deployment of Telematic Services. Testbed.</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2012-09-23 00:27:56 CEST"/>
+<meta name="author" content="Félix Alises-Casas"/>
+<meta name="description" content="Distributed Deployment of Telematic Services. Testbed. By Félix Alises-Casas"/>
+<meta name="keywords" content="overview,DNS,NTP,LDAP,KERBEROS,AFS,SMTP,IMAP,MANAGESIEVE,POSIX,Debian,shell,deployment"/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+
+<h1 class="title">Distributed Deployment of Telematic Services. Testbed.</h1>
+
+
+<div style="text-align: center">
+<p><i>IM/VoIP</i>
+</p>
+</div>
+
+<p>
+Synchronous person-person service implementation. Features:
+</p>
+<ol>
+<li>
+Users can have text, voice or videoconferencing conversations with other
+people belonging to our organization or not but federated (such as it
+happens with Gtalk or Facebook chat, for example).
+
+</li>
+<li>
+Automatic activation of an account after the first successful log-in.
+Users as well as administrators can avoid a registration phase since
+account information is taken from LDAP and they can use KERBEROS to prove
+their identity. That way, created LDAP attributes and KERBEROS principal,
+Jabberd2 can automatically popullate its variables in SQL after the first
+successfull login.
+
+</li>
+<li>
+Automatic subscriptions to the rest of the members.
+</li>
+<li>
+Users can query information about the identity of its contacts using
+automatically generated Vcards.
+
+<p>
+The last two features needed to slightly patch Jabberd2 source code. Our
+patch resolves how to match any of our account names with its node in LDAP
+DIT, so Vcards and subscriptions can be prepared on the fly from LDAP.
+</p>
+</li>
+<li>
+Automatic grouping of contacts using the headquarter/department they belong
+to.
+Jabberd2 creates the roster (list of contacts) on the fly from LDAP, and
+checks the value of "departmentNumber" attribute (it can contain text) to
+organize contacts in groups.
+</li>
+<li>
+Confidenciality.
+All communications, from client to server to between Jabberd2 commponents,
+use TLS. We created the corresponding server X.509v3 certificates thanks
+to our own CA.
+</li>
+<li>
+Graphical and command line user interfaces.
+Specifically Pidgin and its CLI mate Finch. Pidgin is able to both, text
+and multimedia conversations. In this multimedia case it uses Jingle (an
+XMPP extension) for signaling and RTP for media transport.
+
+
+</li>
+</ol>
+
+<p>There is a ttyrec video (15 minutes). Please run:
+</p>
+
+
+<pre class="src src-sh">ttyplay ~/USER/TTYREC/im.ttyrec
+</pre>
+
+
+
+
+
+
+<p>
+( A transcription of it, follows. Feel free to play using this commands as a reference. )
+</p>
+
+
+<pre class="src src-sh">-
+                INSTANT MESSAGING (XMPP) SERVICE DEMOSTRATION
+
+clear
+&#172;
+
+                (
+                  &lt;space&gt;    jump to next event, do not wait.
+                  0,1        pause or set 1x speed.
+                  Control-c  exit.
+                )
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">First of all, let us check if the service can be discovered by DNS SRV
+</span>  records using <span style="color: #ffa07a;">"dig"</span> utility. The first record is about client-to-server
+  communications:
+
+dig @10.168.1.2 _xmpp-client._tcp.casafx.dyndns.org srv +short
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So there is an instance of jabberd2-c2s in both machines, dklab1 and dklab2.
+</span>
+  The second record announces servers for server-to-server communications,
+  those that make effective federation between the service offered by different
+  organizations. This way Gtalk servers, for example, could find us. We are not
+  going to test this any further, though.
+
+dig @10.168.1.2 _xmpp-server._tcp.casafx.dyndns.org srv +short
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">... so another two instances, in dklab1 and in dklab2.
+</span>
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[umea]
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">This screen is prepared to run an umea session.
+</span>
+  We run our XMPP chat client, <span style="color: #ffa07a;">"finch"</span>. We pass -d flag to generate
+  debugging messages. They will be useful later.
+
+finch -d 2&gt;/tmp/finch_umea.log
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[aemu]
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">The service is person-person and synchronous, so we have also logged-in
+</span>  as aemu<span style="color: #00ffff;"> in</span> this screen. We did it<span style="color: #00ffff;"> in</span> dklab2 machine, but the results
+  are the same, as we know, if<span style="color: #00ffff;"> in</span> dklab1.
+
+  Therefore, we run finch<span style="color: #00ffff;"> in</span> order to communicate with umea:
+
+finch -d 2&gt;/tmp/finch_aemu.log
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[umea]
+</span>^z
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Meanwhile, screen of umea, SSO has been used to complete service
+</span>  authentication. Taking advantage of shell suspend feature, we can check
+  Kerberos cache:
+
+klist | grep xmpp
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So here it is the corresponding Kerberos Service Ticket ST for XMPP.
+</span>
+  After a while, the roster is received from server and, some seconds
+  later, both accounts become online to each other (green color)<span style="color: #b0c4de;">.</span>
+
+<span style="color: #b0c4de;">fg</span>
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">This has happened so we can start chatting:
+</span>
+[umea]
+Hi aemu from umea!
+[aemu]
+how are you doing, umea?
+[umea]
+ok...
+
+^z
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">The inferior window of finch interface has been logging debug messages,
+</span>  as we commanded with -d flag. But since, at the same time, we redirected
+  stderr to a file, we can carefully inspect what has been happening behind
+  the scene.
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[root]
+</span><span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So, the program has left these significative traces in /tmp/finch_umea.log.
+</span>  We are going to select the most important. From the beginning:
+
+  (16:58:33) dnssrv: querying srv record for casafx.dyndns.org:
+                  _xmpp-client._tcp.casafx.dyndns.org
+_
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Seeing explicitly "querying srv record for casafx.dyndns.org" we conclude
+</span>  that, yes, service is discovered using DNS SRV records. Then an XMPP
+  communication sequence starts using TLS ( indicated by <span style="color: #ffa07a;">"(ssl)"</span><span style="color: #00ffff;"> in</span> the
+  first line) with Jabberd2:
+
+  (16:58:40) jabber: sending (ssl) (umea@casafx.dyndns.org/):
+
+  &lt;stream:stream
+   <span style="color: #eedd82;">to</span>=<span style="color: #ffa07a;">'casafx.dyndns.org'</span>
+   <span style="color: #eedd82;">xmlns</span>=<span style="color: #ffa07a;">'jabber:client'</span>
+   xmlns:<span style="color: #eedd82;">stream</span>=<span style="color: #ffa07a;">'http://etherx.jabber.org/streams'</span>
+   <span style="color: #eedd82;">version</span>=<span style="color: #ffa07a;">'1.0'</span>&gt;
+_
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">After a while finch receives the list of available authentication
+</span>  mechanisms,<span style="color: #00ffff;"> in</span> our case <span style="color: #ffa07a;">"gssapi"</span> (SASL-GSSAPI, basically KERBEROS):
+
+  ...
+  &lt;mechanisms <span style="color: #eedd82;">xmlns</span>=<span style="color: #ffa07a;">'urn:ietf:params:xml:ns:xmpp-sasl'</span>&gt;
+  &lt;mechanism&gt;gssapi&lt;/mechanism&gt;
+  &lt;/mechanisms&gt;
+_
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">After a successful authentication, we receive our complete JID (jabber id)
+</span>  and a list of features supported by the server:
+
+  &lt;jid&gt;
+  umea@casafx.dyndns.org/a72486bd6ccf73d1aaf48a6eca87529f7c2d828d
+  &lt;/jid&gt;
+  ...
+  &lt;feature <span style="color: #eedd82;">var</span>=<span style="color: #ffa07a;">'presence'</span> /&gt;
+  &lt;feature <span style="color: #eedd82;">var</span>=<span style="color: #ffa07a;">'http://jabber.org/protocol/disco#inf o'</span> /&gt;
+  &lt;feature <span style="color: #eedd82;">var</span>=<span style="color: #ffa07a;">'vcard-temp'</span> /&gt;
+  &lt;feature <span style="color: #eedd82;">var</span>=<span style="color: #ffa07a;">'jabber:iq:roster'</span> /&gt;
+  ...
+&#172;
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">As we see, last two features are vcard (electronic visit card) and roster
+</span>  (list of contacts)<span style="color: #b0c4de;">.</span> Finch asks for them to Jabberd2.
+
+  What Jabberd2 does to fulfill those requests is to query LDAP server for a
+  list of all users that belong to our organization. Then builds on the fly
+  rosters and vcards from those nodes. The query to list users is something
+  like this:
+
+ldapsearch -LLL -x                                              <span style="color: #ffa07a;">\</span>
+         -b <span style="color: #ffa07a;">"ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org"</span> <span style="color: #ffa07a;">\</span>
+         <span style="color: #ffa07a;">'(objectClass=posixAccount)'</span> dn
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So, yes, two nodes are listed representing our current organization
+</span>  population, umea and aemu.
+
+  Also, Jabberd2 uses <span style="color: #ffa07a;">"departmentNumber"</span> text value to structure roster<span style="color: #00ffff;"> in</span>
+  groups. In our case, umea and aemu belong to different groups. We can check
+  that:
+
+ldapsearch -LLL -x                                                       <span style="color: #ffa07a;">\</span>
+         -b <span style="color: #ffa07a;">"uid=umea,ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org"</span> <span style="color: #ffa07a;">\</span>
+         departmentNumber
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So umea is grouped under "sedeA" (read it as "headquarter A"). And for aemu:
+</span>
+ldapsearch -LLL -x                                                       <span style="color: #ffa07a;">\</span>
+         -b <span style="color: #ffa07a;">"uid=aemu,ou=users,ou=accounts,dc=casafx,dc=dyndns,dc=org"</span> <span style="color: #ffa07a;">\</span>
+         departmentNumber
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">aemu is grouped under "sedeB" (read it as "headquarter B"). This way, a third
+</span>  person could receive a roster with a structure like this:
+
+  - headquarter-A
+      - umea
+      - ...
+  - headquarter-B
+      - aemu
+      - ...
+
+clear
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">About Jabberd2 and SQL. Jabberd2 uses some of its tables in SQL as a cache
+</span>  <span style="color: #00ffff;">for</span> this roster information we have just been talking about. We can select
+  it using <span style="color: #ffa07a;">"psql"</span> program. Before, we get non-interactively a Kerberos
+  credencial to let <span style="color: #ffa07a;">"psql"</span> authenticate against PostgreSQL the same way
+  jabberd2-sm component does.
+
+kdestroy
+kinit -k -t /etc/keytab.d/jabberd2.keytab jabberd2-sm/dklab1.casafx.dyndns.org
+klist
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">So, adquired credential, we query dklab1 for roster-items table.
+</span>
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">'select "collection-owner",jid,"to","from",ask from "roster-items";'</span> <span style="color: #ffa07a;">\</span>
+   | psql -h dklab1.casafx.dyndns.org -U jabberd2 -d jabberd2
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">... it is self-explanatory. The last columns reflect the subscription state,
+</span>      <span style="color: #00ffff;">in</span> our case is always <span style="color: #ffa07a;">'t'</span> (true) <span style="color: #00ffff;">for</span> each direction.
+
+      Note also that, thanks to Bucardo master-master replication support,
+      the same values are found if we queried dklab2 instead of dklab1.
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">About roster groups table, where grouping values "sedeA" and "sedeB" are
+</span>  cached:
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">'select * from "roster-groups";'</span> <span style="color: #ffa07a;">\</span>
+   | psql -h dklab1.casafx.dyndns.org -U jabberd2 -d jabberd2
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Not only for cache, Jabberd2 takes advantage of PostgreSQL for storing
+</span>  volatile data. Being XMPP also a presence service, presence information has
+  this volatile quality so we can find a table, called <span style="color: #ffa07a;">"status"</span>, where
+  presence state is saved:
+
+<span style="color: #b0c4de;">echo</span> <span style="color: #ffa07a;">'select "collection-owner",status from status;'</span> <span style="color: #ffa07a;">\</span>
+   | psql -h dklab1.casafx.dyndns.org -U jabberd2 -d jabberd2
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">As we can see, presence state is online for both users at this moment, as
+</span>  expected.
+
+clear
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">[wherever]
+</span>_
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">As we mentioned, traffic is confidential thanks to TLS, the network capturer
+</span>  and analyzer <span style="color: #ffa07a;">"tshark"</span> would show something similar to this hypothetical
+  output if encryption were not used.
+
+  Jabber XML Messaging
+    eXtensible Markup Language
+        &lt;message&gt;
+            <span style="color: #eedd82;">type</span>=<span style="color: #ffa07a;">'chat'</span>
+            <span style="color: #eedd82;">id</span>=<span style="color: #ffa07a;">'purple5564abef'</span>
+            <span style="color: #eedd82;">to</span>=<span style="color: #ffa07a;">'umea@casafx.dyndns.org'</span>
+            &lt;active/&gt;
+                <span style="color: #eedd82;">xmlns</span>=<span style="color: #ffa07a;">'http://jabber.org/protocol/chatstates'</span>
+            &lt;body&gt;
+                Hi aemu!
+            &lt;/body&gt;
+        &lt;/message&gt;
+_
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">But, if encryption is used as it is our case, tshark can not decode
+</span>  the protocol and warns us with an <span style="color: #ffa07a;">"ERROR: unrecognized text"</span>:
+
+  Jabber XML Messaging
+    eXtensible Markup Language
+        [truncated] \027\003\001\000\240\332\362S\253\307\217\317\<span style="color: #eedd82;">220</span>=\237\322\235\213\0
+                    \313\322\261W\303\370\370\222A\000|n\252\340\005\356\347\215\340\342
+        [ ERROR: Unrecognized text ]
+
+
+
+
+<span style="color: #ff7f24;"># </span><span style="color: #ff7f24;">Until this, we have explored both, basic operation (which includes, SSO,
+</span>  confidentiality, chat...) and underlying processes.
+
+  About those, we have an idea about how Jabberd2 uses LDAP and SQL services to
+  offer automatic rosters, grouping, vcards or to store volatile presence
+  information.
+
+  We have left out things like VoIP communications but it is easy to figure out
+  how it works after these explanations and test.
+
+  F&#233;lix.
+</pre>
+
+
+
+<hr/>
+<div id="postamble">
+<p class="author"> Author: Félix Alises-Casas
+<a href="mailto:felix.alises.io@gmail.com">&lt;felix.alises.io@gmail.com&gt;</a>
+</p>
+</div>
+</div>
+</body>
+</html>

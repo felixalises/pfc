@@ -1,0 +1,829 @@
+# -*- org -*-
+http://www.clusterlabs.org/                     (pacemaker   CRM  )
+http://www.corosync.org/                        (corosync    CM&ML)
+http://www.linux-ha.org/wiki/Resource_Agents    (linux ha ra RA   )
+
+INTRO    : http://theclusterguy.clusterlabs.org/post/1262495133/pacemaker-heartbeat-corosync-wtf
+           http://earlruby.org/corosync-pacemaker-notes/
+RA TEMPLT: http://hg.clusterlabs.org/pacemaker/1.1/file/tip/extra/resources/Dummy
+           http://linux-ha.org/doc/man-pages/re-ra-anything.html
+GNL HOWTO: http://clusterlabs.org/doc/en-US/Pacemaker/1.0/html/Pacemaker_Explained/
+           http://www.clusterlabs.org/doc/en-US/Pacemaker/1.1/html/Clusters_from_Scratch/
+     - Active/Passive
+     - Active/Active
+
++ Corosync es el CM&ML, cluster messaging and membership layer (quiénes forman
+  parte del clúster y cómo comunicarse con ellos).
++ Pacemaker es el CRM, cluster resource manager (carga y descarga servicios)
+  se divide en:
+  - CRMd, según la CIB una de ellas toma el rol de master, designed coordinator "DC"
+  - CIB = cluster information base. Representación y estado del clúster.
+  - PE  = policy engine, que le calcula la solución óptima que sigue el CRMd master
+  - SONITHd = shoot-other-node-in-the-head, un interruptor para prevenir
+              corrupciones de datos y otros.
+  - otros: attrd (attribute daemon), mgmtd (management daemon).
++ RA, resource agents son los tests en formato OCF y un pequeño demonio local
+  de iface.
+  - agents
+  - LRM daemon.
+
++ Configuraciones: cualquiera
+  http://ral-arturo.blogspot.com.es/2011/04/aproximacion-al-clustering-de-alta.html
+  - Active/Passive
+  - Active/Active  (permite balanceo de carga)
+  - N+1 (a/p o a/a pero con un nodo de backup de alguno)
+  - N+M (varios de backups: uno de backup del nodo1, otro de backup del nodo2...)
+  - N-to-1
+  - N-to-N (todos pueden actuar de cualquier cosa; modelo de datos es compartido)
+
++ No se ocupa de la coherencia y consistencia del modelo de datos, sólo de la
+  disponibilidad de la entrada y salida. PERO, cuando el modelo de datos depende
+  del estado de una parte de un sistema de ficheros, existen FS concurrentes cuyo
+  Distributed Lock Manager utiliza corosync como messaging layer.
+  - drdb
+  - gfs2, ocfs2, cLVM2
+
+101 pcmk-1.clusterlabs.org
+102 pcmk-2.clusterlabs.org
+
+
++ CIB es un xml en memoria, con la configuración y el estado según cada local
+  LRMd, a veces rehecho desde cero, otras actualizado. El apartado de config es:
+ - opciones
+ - nodos
+ - recursos
+ - relaciones entre recursos
+
+Esa parte se configura con utilidades sólo en las nuevas versiones 2013.
+
+apt-get install -t squeeze-backports pacemaker corosync cluster-agents #pcs
+
+
+
+
+* Funcionalidad equivalente a ucarp:
+
+La funcionalidad de ucarp: varios nodos, un servicio: IP flotante, no
+interdependencias al no haber más servicios.
+http://www.debian-administration.org/article/678/Virtual_IP_addresses_with_ucarp_for_high-availability
+
+... servida con pacemaker+corosync sería como se explica aquí:
+http://albertomolina.wordpress.com/2012/03/04/sencillo-cluster-de-alta-disponilidad-con-pacemaker-y-corosync/
+
+nodo1  :    10.0.0.1
+nodo2  :    10.0.0.2
+recurso: ip 10.0.0.11
+
+corosync-keygen                  # genera /etc/corosync/authkey, para
+chmod 400 /etc/corosync/authkey  # los siguientes nodos usamos ésa tx por scp
+
+vim /etc/corosync/corosync.conf
+ bindnetaddr: 10.0.0.0 # en un escenario no trivial, la red de paso de mensajes
+                       # será distinta al recurso FAILOVER-ADDR q gestionaremos.
+
+vim /etc/default/corosync
+ START=yes
+
+invoke-rc.d corosync restart
+
+crm_mon
+
+... acaba la configuración de corosync y la inclusión de miembros del clúster;
+pasamos a pacemaker y la definición del recurso:
+
+
+# Con sólo dos nodos, no puede decidir coordinadamente puesto que cuando cae
+# uno y se va a decidir la solución... sólo queda uno, no hay quorum y no se
+# haría nada: deshabilito quorum:
+crm configure property no-quorum-policy=ignore
+# Deshabilito stonith
+crm configure property stonith-enabled=false
+
+# Defino recurso FAILOVER-ADDR. La ip es la flotante, la compartida.
+crm configure primitive FAILOVER-ADDR ocf:heartbeat:IPaddr2 \
+    params ip="10.0.0.11" nic="eth0"                        \
+    op monitor interval="10s" meta is-managed="true"
+
+# No defino localización ni dependencias al ser un escenario trivial.
+
+... si hago ping 10.0.0.11 y anoto la mac que los devuelve, apago (o
+    configuro como offline) esa máquina y vuelvo a hacer el ping, será
+    respondido pero ahora por una mac distinta a la inicial y así
+    progresivamente.
+
+
+
+
+* Añadiendo un servicio
+http://ral-arturo.blogspot.com.es/2011/04/aproximacion-al-clustering-de-alta.html
+http://ral-arturo.blogspot.com.es/2011/05/i-cluster-basico-de-alta-disponibilidad.html
+http://ral-arturo.blogspot.com.es/2011/05/ii-cluster-basico-de-alta.html
+http://kaivanov.blogspot.com.es/2012/01/building-ha-cluster-with-pacemaker.html
+http://taqlim.blogspot.com.es/2013/02/mysql-apache-failover-system-with.html
+
+http://serverfault.com/questions/418634/secure-iptables-rules-for-corosync
+
+Pgsql+pacemaker+corosync talk:
+http://www.pgcon.org/2013/schedule/events/546.en.html
+
+
+* DRBD master-multislave failover + Pacemaker/Corosync
+http://taqlim.blogspot.com.es/2013/02/mysql-apache-failover-system-with.html
+d1: 192.168.1.1, /dev/sdb1 /mnt/sync
+d2:          .2, /dev/sdb1 /mnt/sync
+d3:          .3, /dev/sdb1 /mnt/sync
+
+CM&M network: 192.168.0.0
+
+ Podría tener una tercera red para los servicios, LAMP etc. Si no, uso la misma
+ de DRBD:
+
+IP flotante : 192.168.1.100
+
+
+(Posibilidad de usar un nodo aparte de backup:
+ http://www.howtoforge.com/drbd-8.3-third-node-replication-with-debian-etch )
+
+** NTP
+
+** DRBD
+- Instalamos. En todos:
+apt-get -t squeeze-backports install drbd8-utils drbdlinks
+update-rc.d -f drbd remove # Si pacemaker es el asignador, que sólo sea él
+echo 'drbd' >> /etc/modules
+modprobe drbd
+
+... el módulo está en el kernel desde 2.6.33, supongo que lo carga script init.
+    la versión es 8.3, si fuese 8.4 la sintaxis varía algo.
+
+- Configuramos. En d1:
+view /etc/drbd.conf
+vim /etc/drbd.d/global_common.conf  # Opciones globales y comunes
+vim /etc/drbd.d/r0.res              # Opciones por recurso DRBD
+# Content of example.org. Ésto hay que ponerlo entre el global y el .res
+
+# Parámetros globales. Sólo está permitida una sección global.
+# minor-count, dialog-refresh, disable-ip-verification and usage-count
+global {
+    # Permitir que usage.drbd.org contabilice que estamos usando el sw DRBD:
+    # no,yes,ask  Durante pruebas pongo no.
+    usage-count no;
+}
+
+# Opciones heredadas por todos las secciones resource posteriores.
+common {
+  # Syncer configura finamente el comportamiento de replicación:
+  # rate, after, al-extents, use-rle, cpu-mask, verify-alg, csums-alg, c-plan-ahead, c-fill-target, c-delay-target, c-max-rate, c-min-rate and on-no-data-accessible
+  syncer { rate 100M; }
+}
+
+# Sección para definir un recurso DRBD. Mínimo tiene que declarar el protocolo
+# y dos secciones on.
+resource r0 {
+  # Protocol configura cuándo dar por terminada una escritura:
+  # C ->  síncrono, es decir cuando se ha completado en 1º y 2º
+  # B -> asíncrono, se da por completo cuando acaba en 1º y llega al buffer en 2º
+  # A -> asíncrono, se da por completo cuando acaba en 1º y llega a buffer local TCP hacia 2º
+  protocol C;
+ 
+  # Los handlers definen secuencias de ejecutables lanzables ante ciertos
+  # eventos (9). El primero de la secuencia es mandar un correo sobre el
+  # problema concreto llamando a /usr/lib/drbd/notify-* (son enlaces a
+  # /usr/lib/drbd/notify.sh) y después intenta apagar o reiniciar por
+  # varios métodos (sysrq primero o scripts).
+  # pri-on-incon-degr, pri-lost-after-sb, pri-lost, fence-peer (formerly oudate-peer), local-io-error, initial-split-brain, split-brain, before-resync-target, after-resync-target
+
+  handlers {
+    pri-on-incon-degr "/usr/lib/drbd/notify-pri-on-incon-degr.sh; /usr/lib/drbd/notify-emergency-reboot.sh; echo b > /proc/sysrq-trigger ; reboot -f";
+    pri-lost-after-sb "/usr/lib/drbd/notify-pri-lost-after-sb.sh; /usr/lib/drbd/notify-emergency-reboot.sh; echo b > /proc/sysrq-trigger ; reboot -f";
+    local-io-error "/usr/lib/drbd/notify-io-error.sh; /usr/lib/drbd/notify-emergency-shutdown.sh; echo o > /proc/sysrq-trigger ; halt -f";
+  }
+
+  # Opciones de ajuste de comportamiento. Véase man drbdsetup.
+  # wfc-timeout, degr-wfc-timeout, outdated-wfc-timeout, wait-after-sb, stacked-timeouts and become-primary-on 
+  startup {
+    # wfc = wait for connection timeout, pero un degr implica un timeout
+    # específico para nodos degradados, que han sido reiniciados, creo.
+    degr-wfc-timeout 120;    # 2 minutes.
+  }
+
+  # Dispositivo de disco. Nunca úsese cuando DRBD está actuando, tampoco dumpe2fs.
+  # Véase man drbdsetup
+  # on-io-error, size, fencing, use-bmbv, no-disk-barrier, no-disk-flushes, no-disk-drain, no-md-flushes, max-bio-bvecs
+  disk {
+    # Si el dispositivo de disco presenta erorres i/o
+    # detach, call-local-io-error o be pass_on
+    on-io-error   detach;
+  }
+
+  # Ajustes relativos a la conectividad del clúster
+  # Véase man drbdsetup.
+  # sndbuf-size, rcvbuf-size, timeout, connect-int, ping-int, ping-timeout, max-buffers, max-epoch-size, ko-count, allow-two-primaries, cram-hmac-alg, shared-secret, after-sb-0pri, after-sb-1pri, after-sb-2pri, data-integrity-alg, no-tcp-cork, on-congestion, congestion-fill, congestion-extents
+  net {
+    # The following lines are dedicated to handle split-brain situations
+    # (e.g., if one of the nodes fails).
+
+    # Si se pierde el primario:
+    # Pólizas: disconnect               desconecta, no sincronices
+    #          discard-younger-primary  sync desde el que era primario antes
+    #          discard-older-primary    sync desde el que se puso primario tras caída del primario
+    #          discard-zero-changes     simplemente haz a uno el primario random o quien no escribises nada aún
+    #          discard-least-changes    haz primario a quien escribiese más bloques
+    #          discard-node-<nodename>  sync de ese nodo
+    after-sb-0pri disconnect;
+    #after-sb-0pri discard-younger-primary; #discard-zero-changes;
+    #after-sb-0pri discard-zero-changes; # If both secondary, just make one primary
+
+    # Si uno queda primario y el otro no:
+    # Pólizas: disconnect
+    #          consensus              descarta datos 2º si la póliza anterior los destruiría, desconecta en otro caso
+    #          discard-secondary      descarta la versión del 2º
+    #          call-pri-lost-after-sb lo que decida la póliza anteior (0pri)
+    #          violently-as0p         0pri incluso si causa flapping. Dangerous.
+    after-sb-1pri disconnect;
+    #after-sb-1pri discard-secondary; # If one primary, one is not, trust primary
+
+    # Si quedan dos primarios:
+    # Póliza: disconnect
+    #         call-pri-lost-after-sb  lo que decida la póliza anteior (0pri)
+    #         violently-as0p          0pri incluso si causa flapping. Dangerous.
+    after-sb-2pri disconnect;
+    #after-sb-2pri call-pri-lost-after-sb; # If two primaries, make unchanged one secondary
+
+    # Si hay conflicto entre el resultado de la decisión de resync y el rol actual:
+    # Póliza: disconnect    
+    #         violently     permitido sincronizar con el primario. Dangerous.
+    #         call-pri-lost llama a ese script que reinicia la máquina = la pone de secundario
+    rr-conflict disconnect;
+  }
+ 
+  # Ajustes relativos a los procesos de sincronización.
+  # Véase man drbdsetup.
+  syncer {
+    rate 100M;
+    # Extents (área de almacenamiento contigua) alterados
+    # 7-3843, default 127. Mayor nº extent, menos updates pero más largos.
+    al-extents 257;
+  }
+ 
+# Sección para definir el dispositivo y su localización. "on <salida de hostname>"
+  on d1 {
+    device     /dev/drbd0;
+    disk       /dev/sda5;
+    address    169.254.0.1:7788;
+    # Dónde guardar los metadatos; si flexible-meta-disk tiene flexibilidad por
+    # si usas LVM2, creo.
+    # Interna para que use la misma device para metadatos, y la ponga al final.
+    flexible-meta-disk  internal;
+  }
+ 
+  on d2 {
+    device     /dev/drbd0;
+    disk       /dev/sda5;
+   #... puesto que device y disk son iguales en d1 y d2, podríamos haberlas
+   #puesto una sóla vez fuera de los bloques "on".
+    address    169.254.0.4:7788;
+    flexible-meta-disk  internal;
+  }
+}
+
+scp /etc/drbd.d/* d2:/etc/drbd.d/ d3:/etc/drbd.d/
+scp /etc/drbd.d/global_common.conf d2:/etc/ d3:/etc/
+
+- Ininicialización. Creación de metadatos y primera replicación de éstos. En
+  cada nodo:
+( si ya había un fs lo ponesmos a cero:
+  dd if=/dev/zero bs=512 count=512 of=/dev/sdb1 )
+
+drbdadm create-md r0
+invoke-rc.d drbd start
+cat /proc/drbd; drbd-overview
+
+- Forzamos a d1 como primario y creamos el fs:
+drbdadm -- --overwrite-data-of-peer primary r0
+ (el comando drbdadm primary all haría que drbd escogiese alguno)
+mkfs.ext4 /dev/drbd0
+
+- Opcional uso de LVM2:
+pvcreate /dev/drbd0; pvdisplay
+vim /etc/lvm/lvm.conf # Creo que todo ésto es porque los UUID tienen q ser = ?
+ filter = [ "a|drbd.*|", "r|.*|" ]
+ write_cache_state = 0
+rm -rf /etc/lvm/cache/.cache
+
+vgcreate datavg /dev/drbd0
+lvcreate -L 100M -n htdocs datavg
+
+vgchange -aey datavg                        # activo el volumen para montarlo
+mkfs.ext4 /dev/datavg/htdocs
+mount /dev/datavg/htdocs /mnt/drbd/var/www/ # o en /var/www directamente...
+
+Si no tuviésemos a pacemaker y sus RA, para moverlo de d1 a d2 habría que:
+ - En d1:
+   umount /var/www/
+   vgchange -aen datavg # desactivado
+   drbdadm secondary r0
+ - En d2:
+   vgchange -aey datavg
+   mount /dev/datavg/htdocs /mnt/drbd/var/www/
+
+
+- Montaje: si vamos a usar pacemaker, él se encargará de ello. No obstante
+  manualmente sería:
+  mkdir /mnt/drbd
+  vim /etc/fstab
+  /dev/drbd0 /mnt/drbd <t> <opt> 0 0
+  mount /dev/drbd0 /mnt/drbd
+
+
+- Gestión de enlaces.
+ - Una posibilidad es el sw drbdlinks. Ejem para LAMP:
+  This can be used to manage links/mount-binds for /etc/apache, /var/lib/{pg,my}sql
+  that need to appear as if they are local to the system when running
+  applications after a drbd shared partition has been mounted.
+
+  When run with "start" as the mode, drbdlinks will rename the existing
+  files/directories, and then make symbolic links into the DRBD partition.
+  "stop" does the reverse.  By default, the rename appends ".drbdlinks" to the
+  name, but this can be overridden.
+
+  The advantage over creating static symbolic links is that package updates
+  often require that directories point at real files, so updates can often fail
+  if you do not have the shared storage mounted.
+
+  drbdlinks also supports multiple instances of links, in the case of
+  active/active clusters. For example, if you have MySQL running in one
+  resource group, and Apache running in another, you can use the "-c
+  anothercnf.conf" switch to specify a configuration file for each resource
+  group.
+
+  http://www.tummy.com/Community/software/drbdlinks/
+
+
+apt-get install mysql-server apache2 phpmyadmin
+http://dev.mysql.com/doc/refman/5.1/en/ha-drbd.html
+invoke-rc.d mysql-server stop
+invoke-rc.d apache2 stop
+update-rc.d -f mysql-server remove
+update-rc.d -f apache2 remove
+
+mkdir -p /mnt/drbd/mysql/data
+cp -aR /var/lib/mysql/* /mnt/drbd/mysql/data
+cp /etc/mysql/my.cnf /etc/mysql/my.cnf_predrbd
+cp /etc/mysql/my.cnf /mnt/drbd/mysql/
+
+mkdir -p /mnt/drbd/etc/apache2
+cp -Ra /etc/apache2/ /mnt/drbd/etc/apache2
+
+mkdir -p /mnt/drbd/etc/phpmyadmin
+cp /etc/phpmyadmin... /mnt/drbd/phpmyadmin/... # lo que sea
+
+umount /dev/drbd0 ?
+
+
+Ahora podríamos corregir los paths en los .conf, algo así...
+ (no hacer)
+ vim /etc/mysql/my.cnf
+  datadir = /mnt/drbd/mysql
+ vim /etc/apache2/sites-available/default
+  DocumentRoot /mnt/drbd/var/www/default
+
+... pero mejor usamos drbdlinks. En todas las máquinas:
+
+vim /etc/drbdlinks.conf  # es autoexplicativo
+ mountpoint('/mnt/drbd')
+ link('/var/www','/mnt/drbd/www')
+ link('/var/lib/mysql','/mnt/drbd/mysql')
+ link('/etc/mysql/my.cnf','/mnt/drbd/mysql/my.cnf')
+ #link('...
+ #usebindmount(1)
+ #link('ahora se usará mount bind....
+ #usebindmount(0)
+ #link('ya se volverá a usar ln -s ...
+
+Queda para después configurar el RA de drbdlinks para pacemaker.
+
+ - Otra opción: utilizar el RA SYMLINK de pacemaker.
+   http://www.sebastien-han.fr/blog/2012/11/01/manage-your-symlin-with-pacemaker/
+
+   What does the RA do? Given a configured rule "/path/file, symlink, suffix"
+   in pacemaker, it basically it checks if a file called <file> in <path>
+   exists, if it does it simply rename <file>.<suffix> after the symlink is
+   created. If it does not it directly creates <symlink>.
+
+   Funciona igual, pero no necesita scripts python, es autocontenido en
+   pacemaker.
+
+
+** Pacemaker & Corosync
+apt-get -t squeeze-backports install pacemaker
+
+- Configuración de corosync. En d1:
+vim /etc/corosync/corosync.conf
+# Configuration options for the totem protocol.
+totem {
+        # Versión del fichero de configuración.
+        version: 2
+ 
+        # How long before declaring a token lost (ms)
+        token: 3000
+ 
+        # How many token retransmits before forming a new configuration
+        token_retransmits_before_loss_const: 10
+ 
+        # How long to wait for join messages in the membership protocol (ms)
+        join: 60
+ 
+        # How long to wait for consensus to be achieved before starting a new round of membership configuration (ms)
+        consensus: 3600
+ 
+        # Turn off the virtual synchrony filter
+        vsftype: none
+ 
+        # Number of messages that may be sent by one processor on receipt of the token
+        max_messages: 20
+ 
+        # Limit generated nodeids to 31-bits (positive signed integers)
+        clear_node_high_bit: yes
+ 
+        # Disable encryption
+        secauth: off
+ 
+        # How many threads to use for encryption/decryption
+        threads: 0
+ 
+        # Optionally assign a fixed node id (integer)
+        # nodeid: 1234
+ 
+        # This specifies the mode of redundant ring, which may be none, active, or passive.
+        rrp_mode: none
+ 
+        interface {
+                # ID de esta iface para el Redundant Ring Protocol. Empieza en 0.
+                ringnumber: 0
+                # Iface con IPv4 o IPv6:
+                bindnetaddr: 192.168.2.0
+                # Avoid 224.x.x.x because this is a "config" multicast address.
+                mcastaddr: 226.94.1.1
+                # Puerto UDP
+                mcastport: 5405
+                # Si usásemos "transport udpu" y no usásemos mcastaddr, creo que
+                # habría que crear secciones:
+                # member {
+                #        memberaddr: 10.0.0.2
+                # }
+                # member {
+                #        memberaddr: 10.0.0.3
+                # }
+                # ...
+        }
+}
+ 
+amf {  
+        mode: disabled
+}
+
+service {
+        # Load the Pacemaker Cluster Resource Manager
+        ver:       0
+        name:      pacemaker
+}
+ 
+aisexec {
+        user:   root
+        group:  root
+}
+
+# Configuration options for logging
+logging {
+        fileline: off
+        to_stderr: yes
+        to_logfile: yes
+        logfile: /var/log/corosync/corosync.log
+        to_syslog: yes
+        syslog_facility: daemon
+        debug: off
+        timestamp: on
+        logger_subsys {
+                subsys: AMF
+                debug: off
+                tags: enter|leave|trace1|trace2|trace3|trace4|trace6
+        }
+}
+
+
+
+corosync-keygen
+
+scp /etc/corosync/authkey       d2:/etc/corosync d3:/etc/corosync
+scp /etc/corosync/corosync.conf d2:/etc/corosync d3:/etc/corosync
+
+- en todos:
+echo “START=yes” > /etc/default/corosync
+invoke-rc.d corosync start
+
+- en d1 por ejemplo:
+crm_mon --one-shot -V # cluster state. equiv a "crm_mon -1f -V"
+ Si no hubiese más de dos nodos:
+    crm configure property stonith-enabled="false"
+    crm configure property no-quorum-policy="ignore"
+
+- Pacemaker configuration para failover:
+crm
+ cib new conf20110221
+  configure
+   ...
+   #LVM2:
+   primitive datavg ocf:heartbeat:LVM params volgrpname="datavg" exclusive="true" op start interval="0" timeout="30" op stop interval="0" timeout="30"
+   #DRBDlinks:
+   primitive DRBD-LINKS heartbeat:drbdlinks \
+	op monitor interval="10s" \
+	meta target-role="Started"
+   #SYSLINKS:
+   primitive p_sym_leseb ocf:heartbeat:symlink \
+        params target="/mnt/drbd/util1/leseb" link="/etc/leseb" backup_suffix=".active"
+   colocation col_sym_with_util1 inf: p_sym_leseb ms_drbd_util1:Master
+   order ord_sym_after_util1 inf: ms_drbd_util1:promote p_sym_leseb:start
+   #
+  commit
+  end
+ cib use live
+ cib commit conf20110221
+ quit
+
+
+** Test failover
+- En d1:
+crm node standby # Si pones este nodo en standby, los recursos se asignan a otro nodo:
+crm_mon -1f -V
+
+crm node online  # Si lo vuelves a poner online, los recursos vuelven a d1 (default):
+crm_mon -1f -V
+
+crm resource move WebServer d3 # switchover; mueve ese recurso a ese nodo manual
+crm_mon -1f -V
+
+crm resource unmove WebServer # devuelve el control de asignaciones a pacemaker
+
+
+* cLVM2 + DRBD (Distributed Replicated Block Device) + OCFS2 + Pacemaker/Corosync
+http://doc.opensuse.org/products_new/draft/SLE-HA/SLE-ha/index.html
+
+ Resources:            ...      
+ -------------------------------
+ Resource Allocation:  pacemaker
+ -------------------------------
+ Messaging:            corosync 
+
+** Enlaces, Bonding, /etc/hosts, NTP, puppet|cfengine|csync2
+Al menos dos enlaces entre cada máquina, ethernet de 100Mb/s o más y bonded.
+ http://tech.kulish.com/2011/11/30/debian-squeeze-802-3ad/
+ https://help.ubuntu.com/community/UbuntuBonding?action=show&redirect=LinkAggregation
+ http://www.howtogeek.com/52068/how-to-setup-network-link-aggregation-802-3ad-on-ubuntu/
+
+El equipo de red debe soportar multicasting.
+
+Quizás un power switch, un dispositivo que pueda ordenar a un equipo apagarlo y
+encenderlo de nuevo. Se podría considerar a ésto la parte física de SONITH.
+
+Es muy importante que los nodos sean accesibles por nombre, para evitar
+problemas se usa /etc/hosts (adicionalmente a DNS pero primero se mira allí).
+
+NTP para sincronizar la hora.
+
+Se puede usar sw como CSYNC2 para sincronizar fichero en el cluster; usa
+rsync. It maintains a database of modified files so it is able to handle
+deletion of files and file modification conflicts. Es una alternativa simple a
+puppet o cfengine.
+
+** iSCSI (Storage Area Network)
+Si vas a usar iscsi o FB para tener una SAN de la que montan los nodos
+directamente.
+
+r/iscsi
+
+
+Si quieres dotarla de replicación adicional, usas DRBD también.
+
+Si va a haber acceso w concurrentes distribuídos (de dif nodos), se formaterá
+usando un FS compartido como OCFS2 o GFS2, pudiendo usar cLVM2 para particionar
+dinámicamente.
+
+** Instalación pacemaker+corosync
+apt-get install pacemaker corosync cluster-agents
+
+scp /etc/corosync/corosync.conf fo3:/etc/corosync/
+corosync-keygen
+scp /etc/corosync/authkey fo3:/etc/corosync/
+invoke-rc.d corosync start
+
+** DRBD (Storage Replication)
+http://www.drbd.org/users-guide-8.3/
+
+apt-get install drbd8-utils drbdlinks
+update-rc.d -f drbd remove
+scp /etc/drbd.d/* fo3:/etc/drbd.d/
+
+- DRBD = raid1 (mirroring) a nivel de bloque entre dispositivos en red para
+  conseguir alta disponibilidad por un mecanismo de failover. Si cae la
+  tecnología HA designa a otro nodo como "Active node" (failover) y cuando se
+  recupere sincroniza los bloques modificados y designa de nuevo como activo al
+  primigenio (failback) o no. Agregación de enlaces (802.3ad) puede ser una
+  buena forma de asegurarse alta tasa de transmisión para la replicación.
+- DRDB no comparte el medio, sino que lo replica luego: no es un SPF, si falla
+  la comunicación y cada nodo se tomase a sí mismo como master (split brain) no
+  habría corrupción así que te evitas una fencing policy, las operaciones de
+  lectura son locales vs SAN o NAS.
+- Primary-primary mode = modo master-master (no tiene modo multi-master).
+  Además en este modo el FS debe ser especial: no ext4 sino gfs, ocfs2... o
+  bien se usa LVM encima y su funcionalidad de snapshots (pues las escrituras
+  las hace siempre por duplicado, luego podemos leer del original y del
+  snapshot).
+  - La configuración master-master permite usar funcionalidades de
+  load-balancing built-in de drbd8.
+- Synchronous mirroring = protocol C in DRBD speak = modo transaccional.
+  También permite modo asíncrono pero no leo cuál sería su nombre.
+
+- The drbd OCF resource agent provides Master/Slave capability. Había uno
+  antiguo para heartbeat, úsese mejor el OCF. Por otro lado, es vital que sólo
+  el RA maneje a DRBD, luego hay que quitar los scripts de inicio de DRBD (muy
+  importante en situaciones de split brain).
+
+- DRBD en modo m/s + MySQL es posible. Hace falta que mysql esté declarado en
+  un grupo que sólo tras la elección del master drbd se active y asocie (al
+  elegido). Yo tenía dudas de usar drbd con rdbms, pero se supone que sólo hay
+  un rdbms activo, los otros no escriben ni leeen.
+
+
+
+http://zeldor.biz/2010/12/activepassive-cluster-with-pacemaker-corosync/
+http://zeldor.biz/2011/07/drbd-masterslave-setup/
+http://ubanov.wordpress.com/2009/08/10/instalacion-servidores-con-ocfs2-drbd-lvm2-raid1-sobre-debian-howto-install/
+https://wiki.ubuntu.com/ClusterStack/LucidTesting#Pacemaker.2C_drbd8_and_OCFS2_or_GFS2
+
+http://drbd.10923.n7.nabble.com/Reasons-not-to-use-allow-two-primaries-with-DRDB-td11807.html
+http://www.gossamer-threads.com/lists/drbd/users/20044
+
+** OCFS2
+OCFS2 permite quotas.
+
+Si necesitas un FS compartido (OCFS2, GFS2), éste necesita usar un Distributed
+Lock Manager. Creo que cada FS compartido tiene el suyo, pero lo ideal es que
+se utilice corosync como messaging layer y pacemaker.
+
+File access is coordinated through DLM. Sólo necesitas un DLM aunque haya
+varios servicios (OCFS2, CLVM... que lo necesitasen). Según veo hay varios
+módulos del kernel que lo proveen, uno es del propio ocfs2 y el otro es
+genérico en la rama "fs".
+http://lwn.net/Articles/136308/
+
+Before you can create OCFS2 volumes, you must configure the following resources
+as services in the cluster: DLM, O2CB and a STONITH resource. OCFS2 uses the
+cluster membership services from Corosync/Pacemaker which run in user
+space. Therefore, DLM and O2CB need to be configured as clone resources that
+are present on each node in the cluster.
+
+OCFS2 may either use an intrinsic cluster communication layer to manage cluster
+membership and filesystem mount and unmount operation, or alternatively defer
+those tasks to the Pacemaker cluster infrastructure. A su vez, pacemaker tiene
+una iface al DLM de OCFS2: ocf:pacemaker:controld; su iface de CRM es 
+ocf:ocfs2:o2cb y por último un tercer RA permite anunciar los fs que tengas con
+OCFS2: cf:heartbeat:Filesystem. Si usas pacemaker y esos RA ya no es necesario
+configurar un /etc/ocfs2/cluster.conf.
+
+http://www.drbd.org/users-guide-8.3/ch-ocfs2.html
+
+** cLVM2
+cLVM2 son extensiones de clustering para LVM2. Es así otra tecnología para
+permitir almacenamiento compartido, pero en este caso es sólo para la parte de
+particionado permitiendo que este tipo de metadatos se propaguen por los nodos
+(y si redimensionas desde un nodo, que los otros dejen de funcionar con el
+viejo perfil y se acojan al nuevo). Compatible con pacemaker. LVM2 cogía unos
+PV (phisical volumes: discos o particiones físicas que administra sólo LVM2) y
+los agrupaba como VG (Grupos de Volumenes) para poder ofrecer con ellos LV, los
+volúmenes lógicos que montas, redimensionas etc. También de un LV puedes hacer
+un snapshot o SLV. Si usas el modo primario-primario de DRBD, éste se puede
+interponer como PV de LVM2 permitiendo luego crear un VG de dispositivos drbd y
+de ahí LV en el cluster, pudiendo redimensionar ya online etc; la otra
+posibilidad, menos interesante es que DRBD usa un LV ya creado de backend, lo
+cual no necesita un LVM clusterizable ya, sería una curiosidad excepto si
+decimos que esos LV se pueden usar para que DRBD los ofrezca luego como PV DRBD
+en el clúster.
+http://www.drbd.org/users-guide-8.3/s-lvm-drbd-as-pv.html
+http://www.drbd.org/users-guide-8.3/s-nested-lvm.html
+
+Al igual que OCFS2, no necesitas las extensiones de clúster cuando sólo tienes
+un master drbd.
+
+3 componentes:
+- LVM2
+- cLVM2
+- DLM
+
+Luego hay que activar cLVM con el tipo de bloque 3:
+
+vim /etc/lvm/lvm.conf
+ locking_type = 3     # para que lvm use clustered locking
+
+... entonces arrancas clvmd, si estás usando cman (que es el el CM&M compatible
+AIS de la infraestructura de clustering de RedHat y que también arranca a
+fenced; su CRM sería rgmanager) arrancas éste, si no configuras pacemaker para
+clvm, supongo.
+
+Y ya podrías usar pvcreate, vgcreate y lvcreate en el dispositivo de bloque
+DRBD, y después mkfs.gfs2 o mkfs.ocfs2. La versión 2.02 de cLVM para squeeze no
+permite usarlo con pacemaker, sólo cman.
+
+http://www.advogato.org/person/lmb/diary.html?start=104
+https://www.suse.com/documentation/sle_ha/book_sleha/?page=/documentation/sle_ha/book_sleha/data/book_sleha.html
+http://doc.opensuse.org/products/draft/SLE-HA/SLE-ha-guide_sd_draft/cha.ha.config.example.html
+http://www.drbd.org/users-guide-8.3/ch-lvm.html
+
+** Load balancing with LVS y Bonding
+http://doc.opensuse.org/products_new/draft/SLE-HA/SLE-ha/index.html
+
+* cmds
++ Config gnl y queries al CRM:
+crm_mon
+crm status                              # estado del manager
+crm resource status                     # estado de los recursos reg
+
+crm configure                           # shell crm
+    cib new working                     # crear backup del cib llamado working
+    cib reset working                   # actualiza el backup del cib
+    cib commit working                  # hace a la copia working el cib usado
+
+crm configure show                      # configuración de pacemaker (crm, ra...)
+crm configure show xml                  # configuración en xml
+crm configure show > /tmp/crm.xml
+crm configure load update /tmp/crm.xml
+
+crm_verify -L -V                        # verificar configuración
+
+crm resource status ClusterIP           # Dice qué host asume el control de ese resource
+crm resource move ClusterIP server1     # mueve ese recurso (y depends) al server1
+crm resource unmove ClusterIP           # quitar esa preferencia por server1
+crm resource cleanup WebSite            # To clear the fail count on a WebSite resource
+
+crm ra list ocf heartbeat               # lista todos los ra disponibles de hb y pacemaker
+crm ra list ocf pacemaker
+
+
++ Cluster configuration:
+crm configure property stonith-enabled=false   # 
+crm configure property no-quorum-policy=ignore # 
+
+  - Adding a second IP address resource to the cluster:
+
+crm configure primitive ClusterIP ocf:heartbeat:IPaddr2    \
+        params ip="192.168.1.97" cidr_netmask="24"         \
+        op monitor interval="30" timeout="25" start-delay="0"
+
+  - Adding an Apache resource with https enabled:
+
+crm configure primitive WebSite ocf:heartbeat:apache                \
+        params configfile="/etc/apache2/httpd.conf" options="-DSSL" \
+        operations $id="WebSite-operations"                         \
+        op start interval="0" timeout="40"                          \
+        op stop interval="0" timeout="60"                           \
+        op monitor interval="60" timeout="120" start-delay="0"      \
+        statusurl="http://127.0.0.1/server-status/"                 \
+        meta target-role="Started"
+
+  - Adding a DRBD resource:
+
+    Note that the resource name drbd_resource="drbd_resource_name" must match
+    the name listed in /etc/drbd.conf and that drbd should NOT be started by
+    init. http://www.drbd.org/users-guide-emb/s-pacemaker-crm-drbd-backed-service.html
+
+crm configure primitive VolumeDRBD ocf:linbit:drbd                  \
+        params drbd_resource="drbd_resource_name"                   \
+        operations $id="VolumeDRBD-operations"                      \
+        op start interval="0" timeout="240"                         \
+        op promote interval="0" timeout="90"                        \
+        op demote interval="0" timeout="90"                         \
+        op stop interval="0" timeout="100"                          \
+        op monitor interval="40" timeout="60" start-delay="0"       \
+        op notify interval="0" timeout="90"                         \
+        meta target-role="started"
+crm configure primitive FileSystemDRBD ocf:heartbeat:Filesystem       \
+        params device="/dev/drbd0" directory="/srv/src" fstype="ext3" \
+        operations $id="FileSystemDRBD-operations"                    \
+        op start interval="0" timeout="60"                            \
+        op stop interval="0" timeout="60" fast_stop="no"              \
+        op monitor interval="40" timeout="60" start-delay="0"         \
+        op notify interval="0" timeout="60"
+crm configure ms MasterDRBD VolumeDRBD                                \
+        meta clone-max="2" notify="true" target-role="started"
+
+  - Dependencias: IP, Apache y Drdb primary anteriores deben ser tomados
+    siempre por el mismo nodo:
+
+crm configure group Cluster ClusterIP FileSystemDRBD WebSite          \
+        meta target-role="Started"
+crm configure colocation WebServerWithIP inf: Cluster MasterDRBD:Master
+crm configureorder StartFileSystemFirst inf: MasterDRBD:promote Cluster:start
+
+
+
+
